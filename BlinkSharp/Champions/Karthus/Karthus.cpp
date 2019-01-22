@@ -82,7 +82,7 @@ void Karthus::lay_waste() {
 	{
 		SDK_SPELL Q = Player.GetSpell(0);
 		
-		auto predPos = Pred->BasePrediction(target, 900.f, 220.f, 1000.f, false);
+		auto predPos = Pred->CircularPrediction(target, 625.f, 900.f, 100.f);
 		if (predPos.IsValid()) {
 			SdkCastSpellLocalPlayer(nullptr, &predPos, 0, SPELL_CAST_START);
 		}

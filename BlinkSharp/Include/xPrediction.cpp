@@ -43,11 +43,11 @@ auto xPrediction::BasePrediction(AIHeroClient* target, float range, float castde
 	}
 }
 
-auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float range, float radius)
+auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float range, float radius) -> Vector3
 {
 	auto tNav = target->NavInfo();
 
-	if (tNav.Waypoints && tNav.NextWaypoint)
+	if (tNav.Waypoints && tNav.NumberOfWaypoints)
 	{
 		auto Waypoint = tNav.Waypoints[tNav.NextWaypoint];
 		auto orientation = tNav.Velocity; orientation.Normalize();

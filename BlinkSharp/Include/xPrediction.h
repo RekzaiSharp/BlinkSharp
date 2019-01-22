@@ -5,7 +5,7 @@ class xPrediction
 {
 public:
 	auto BasePrediction(AIHeroClient* target, float range, float castdelay, float missilespeed, bool castMaxRange)->Vector3;
-	auto CircularPrediction(AIHeroClient* target, float castTime, float range, float radius);
+	auto CircularPrediction(AIHeroClient* target, float castTime, float range, float radius)->Vector3;
 };
 
 extern std::unique_ptr<xPrediction> Pred;
