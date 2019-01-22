@@ -1,5 +1,6 @@
 #include "Include/SDK Extensions.h"
 #include "Champions/Irelia/Irelia.h"
+#include "Champions/Karthus/Karthus.h"
 
 PLUGIN_SETUP("BlinkSharp", OnLoad);
 
@@ -11,6 +12,8 @@ SDK_EVENT(void) OnLoad(void* UserData) {
 
 		if (Common::CompareLower(Player.GetCharName(), "irelia"))
 			Irelia::Init();
+		if (Common::CompareLower(Player.GetCharName(), "karthus"))
+			Karthus::Init();
 	}
 }
 
