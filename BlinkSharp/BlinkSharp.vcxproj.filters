@@ -27,6 +27,9 @@
     <ClCompile Include="Champions\Irelia\Irelia.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\clipper.hpp">
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Champions\Irelia\Irelia.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
