@@ -162,6 +162,7 @@
     <ClCompile Include="Include\clipper.cpp" />
     <ClCompile Include="Include\xPrediction.cpp" />
     <ClCompile Include="Champions\Irelia\Irelia.cpp" />
+    <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champions\Karthus\Karthus.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="Include\Vectors.hpp" />
     <ClInclude Include="Include\xPrediction.h" />
     <ClInclude Include="Champions\Irelia\Irelia.h" />
+    <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
