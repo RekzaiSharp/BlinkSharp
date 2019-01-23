@@ -91,4 +91,35 @@ auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float
 	}
 }
 
+auto xPrediction::PhysicalDamage(AIHeroClient* target, float damage) -> float
+{
+	auto ArmorPenPercent = Player.GetPercentArmorPen();
+	auto ArmorPenFlat = Player.GetFlatArmorPen();
+	auto Armor = target->GetArmor();
+	float BonusArmor;
+	float BonusArmorPen;
+	SdkGetAIBonusArmor(target->PTR(), &BonusArmor);
+	SdkGetAIBonusArmorPenetration(Player.PTR(), &BonusArmorPen);
+
+	auto value = 100 / (100 + (Armor * ArmorPenPercent) - (BonusArmor * (1 - BonusArmorPen)) - ArmorPenFlat);
+
+	if (Armor < 0.0) { value = 2 - 100 / (100 - Armor); }
+	else if (Armor * ArmorPenPercent - ArmorPenFlat < 0) { value = 1; }
+
+	return std::fmax(0, std::floor(value * damage));
+}
+
+auto xPrediction::MagicalDamage(AIHeroClient* target, float damage) -> float
+{
+	auto MR = target->GetMagicResist();
+	auto MagicPenPercent = Player.GetPercentMagicPen();
+	auto MagicPenFlat = Player.GetFlatMagicPen();
+	auto value = 100 / (100 + (MR * MagicPenPercent) - MagicPenFlat);
+
+	if (MR < 0) { value = 2 - 100 / (100 - MR); }
+	else if ((MR * MagicPenPercent) - MagicPenFlat < 0) { value = 1;}
+	return std::fmax(0, std::floor(value * damage));
+}
+
+
 std::unique_ptr<xPrediction> Pred = std::make_unique<xPrediction>();
