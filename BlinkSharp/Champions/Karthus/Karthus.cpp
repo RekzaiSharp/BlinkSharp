@@ -32,9 +32,16 @@ void Karthus::Init() {
 void Karthus::Tick(void * UserData) {
 	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
 	{
-		lay_waste();
+		if (Menu::Get<bool>("Menu.UseQ")) { lay_waste(); }
+		if (Menu::Get<bool>("Menu.UseE")) { defile(); }
+		if (Menu::Get<bool>("Menu.UseW")) { wall(); }
+	}
+	else if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear)) {
+		if (Menu::Get<bool>("Menu.FarmQ")) { LaneClear(); }
+		//JungleClear();
 	}
 	checkKillable();
+	
 }
 
 ///This gets called X times per second, where X is your league fps.
@@ -51,38 +58,32 @@ void Karthus::Draw(void * UserData) {
 	}
 }
 
+//-----------
+
 ///Your menu settings go here
 void Karthus::DrawMenu(void * UserData) {
-	Menu::Checkbox("Draw Q?", "Menu.DrawQ", true);
-}
-
-auto Karthus::get_circle_prediction(const float spell_range, const float cast_time) -> Vector3 {
-	auto target = pCore->TS->GetTarget(900.f);
-	//if (target->IsDashing()) {
-	//	return target->NavInfo().EndPos;
-	//}
-	auto velocity = target->NavInfo().Velocity;
-	//SdkGetAINavData(target, nullptr, nullptr, nullptr, nullptr, nullptr, PSDKVECTOR(&velocity), nullptr, nullptr, nullptr);
-	velocity.y = 0;
-	const auto orientation = velocity.Normalize();
-
-	if (!velocity.IsValid())
-	{
-		return target->GetPosition();
-	}
-
-	auto result = target->GetPosition() + orientation * target->GetMovementSpeed() * cast_time;
-
-	return result;
+	Menu::Tree("Q Settings", "QMenu", false, [&]() {
+		Menu::Checkbox("Draw Q", "Menu.DrawQ", true);
+		Menu::Checkbox("Use Q in Combo", "Menu.UseQ", true);
+		Menu::Checkbox("Use Q in LaneClear (WIP)", "Menu.FarmQ", false);
+	});
+	Menu::Tree("W Settings", "WMenu", false, [&]() {
+		Menu::Checkbox("Use W in Combo", "Menu.UseW", true);
+	});
+	Menu::Tree("E Settings", "EMenu", false, [&]() {
+		Menu::Checkbox("Use E in Combo", "Menu.UseE", true);
+		Menu::SliderFloat("E Min Mana Percent", "EMana", 40.f, 0.f, 100.f, "%.3f");
+	});
+	Menu::Tree("R Settings", "RMenu", false, [&]() {
+		Menu::Checkbox("Notify Killable with R", "Menu.NotifyR", true);
+	});
 }
 
 void Karthus::lay_waste() {
-	auto target = pCore->TS->GetTarget(900.f);
-	if (is_spell_up(0) && Player.Distance(target) <= 900.f)
+	auto target = pCore->TS->GetTarget(875.f);
+	if (is_spell_up(0) && Player.Distance(target) <= 875.f)
 	{
-		SDK_SPELL Q = Player.GetSpell(0);
-		
-		auto predPos = Pred->CircularPrediction(target, 625.f, 900.f, 100.f);
+		auto predPos = Pred->CircularPrediction(target, 0.675f, 875.f, 200.f);
 		if (predPos.IsValid()) {
 			SdkCastSpellLocalPlayer(nullptr, &predPos, 0, SPELL_CAST_START);
 		}
@@ -92,10 +93,54 @@ void Karthus::lay_waste() {
 void Karthus::defile()
 {
 	auto target = pCore->TS->GetTarget(400.f);
-	if (is_spell_up(2) && Player.Distance(target) <= 400.f && target->IsTargetable())
+	auto E = Player.GetSpell(2);
+	if (is_spell_up(2) && Player.Distance(target) <= 400.f && target->IsTargetable() && E.ToggleState == 1 && Player.GetManaPercent() > Menu::Get<float>("EMana"))
 	{
 		pSDK->Control->CastSpell(2, false);
 	}
+	else if (E.ToggleState == 2 && Player.Distance(target) > 400.f || E.ToggleState == 2 && Player.GetManaPercent() < Menu::Get<float>("EMana")) {
+		pSDK->Control->CastSpell(2, false);
+	}
+}
+
+void Karthus::wall()
+{
+	auto target = pCore->TS->GetTarget(900.f);
+	if (is_spell_up(1) && Player.Distance(target) <= 900.f)
+	{
+		auto predPos = Pred->CircularPrediction(target, 0.7f, 900.f, 50.f);
+		if (predPos.IsValid()) {
+			SdkCastSpellLocalPlayer(nullptr, &predPos, 1, SPELL_CAST_START);
+		}
+	}
+}
+
+void Karthus::LaneClear() 
+{
+	auto minions = pSDK->EntityManager->GetEnemyMinions(900.f);
+
+	for (auto& minion : minions) {
+		if (is_spell_up(0) && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) < GetQDamage() && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) > 0.f) {
+			pSDK->Control->CastSpell(0, minion.second, false);
+		}
+	}
+}
+
+void Karthus::JungleClear() 
+{
+	auto monsters = pSDK->EntityManager->GetJungleMonsters(900.f);
+
+	for (auto& monster : monsters) {
+		if (is_spell_up(0)) {
+			pSDK->Control->CastSpell(0, monster.second, false);
+		}
+	}
+}
+
+float Karthus::GetQDamage() {
+	auto level = Player.GetSpell(0).Level;
+	std::vector<float> QDamage = { 0.f, 50.f, 70.f, 90.f, 110.f, 130.f };
+	return QDamage[level] + 0.3f * Player.GetAbilityPower();
 }
 
 bool Karthus::is_spell_up(unsigned char Slot) {
@@ -116,22 +161,14 @@ auto Karthus::checkKillable() -> void
 	for (auto& enemy : enemies)
 	{
 
-		if (enemy.second->GetHealth().Current < pSDK->DamageLib->CalculateMagicalDamage(&Player, enemy.second, GetRDamage()) && enemy.second->IsAlive() && CanNotify() && is_spell_up(3) && enemy.second->IsVisible())
+		if (enemy.second->GetHealth().Current < Pred->MagicalDamage(enemy.second, GetRDamage()) && enemy.second->IsAlive() && CanNotify() && is_spell_up(3) && enemy.second->IsVisible())
 		{
-			Game::PrintChat("[" + std::to_string((int)(floor(Game::Time() / 60))) + ":" + std::to_string((int)Game::Time() % 60) + "] " + std::string(enemy.second->GetCharName()) + " killable with R.", CHAT_FLAG_TURQUOISE);
-			//const char* killableMsg = enemy.second->GetCharName();
-			//SdkDrawText(nullptr, &textPos, killableMsg, "Arial", &Color::Black, 15, 15, 15, false);
-			//pSDK->Control->CastSpell(3, false);
+			if (Menu::Get<bool>("Menu.NotifyR")) {
+				Game::PrintChat("[" + std::to_string((int)(floor(Game::Time() / 60))) + ":" + std::to_string((int)Game::Time() % 60) + "] " + std::string(enemy.second->GetCharName()) + " killable with R.", CHAT_FLAG_TURQUOISE);
+			}
 			LastNotifyTick = GetTickCount();
 		}
 	}
-}
-
-auto Karthus::CalcDamage(AIHeroClient* enemy) -> float
-{
-	auto RDamage = GetRDamage();
-	auto MResist = (enemy->GetMagicResist() * (100 - Player.GetPercentMagicPen())) - Player.GetFlatMagicPen();
-	return RDamage * (100 / (100 + MResist));
 }
 
 auto Karthus::GetRDamage() -> float

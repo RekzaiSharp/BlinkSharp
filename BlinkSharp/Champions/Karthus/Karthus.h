@@ -16,11 +16,14 @@ public:
 	static Vector3 __cdecl get_circle_prediction(_In_ float spell_range, _In_ float cast_time);
 	static void __cdecl lay_waste();
 	static void __cdecl defile();
+	static void __cdecl wall();
 	static bool __cdecl is_spell_up(_In_ unsigned char Slot);
 	static void __cdecl checkKillable();
-	static float __cdecl CalcDamage(AIHeroClient* enemy);
 	static bool __cdecl CanNotify();
 	static float __cdecl GetRDamage();
+	static float __cdecl GetQDamage();
+	static void __cdecl LaneClear();
+	static void __cdecl JungleClear();
 };
 
 extern std::unique_ptr<Karthus> pKarthus;

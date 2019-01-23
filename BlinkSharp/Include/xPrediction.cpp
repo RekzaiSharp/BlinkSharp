@@ -45,6 +45,7 @@ auto xPrediction::BasePrediction(AIHeroClient* target, float range, float castde
 
 auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float range, float radius) -> Vector3
 {
+	
 	auto tNav = target->NavInfo();
 
 	if (tNav.Waypoints && tNav.NumberOfWaypoints)
@@ -52,33 +53,41 @@ auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float
 		auto Waypoint = tNav.Waypoints[tNav.NextWaypoint];
 		auto orientation = tNav.Velocity; orientation.Normalize();
 		auto result = target->GetPosition() + target->GetMovementSpeed() * orientation * +castTime;
-
+		
+		/*
 		bool isWall;
 		SdkIsLocationWall(&result, &isWall);
 		if (isWall)
 		{
+			
 			if (Player.Distance(Waypoint) > range)
 				return Vector3(0, 0, 0);
 			else
 				return Waypoint;
 		}
+		*/
 
 		float waydist = target->Distance(Waypoint);
 		float preddist = target->Distance(result);
+		
 
 		if (preddist > waydist)
 		{
+			
 			if (Player.Distance(Waypoint) > range)
 				return Vector3(0, 0, 0);
 			else
 				return Waypoint;
 		}
 
-		if (Player.Distance(result) > range)
+		if (Player.Distance(result) > range) {
 			return Vector3(0, 0, 0);
+		}
 
-		if (target->Distance(result) > (radius + target->GetBoundingRadius()))
+		
+		if (target->Distance(result) > (radius + target->GetBoundingRadius())) {
 			return Vector3(0, 0, 0);
+		}
 
 		return result;
 	}
