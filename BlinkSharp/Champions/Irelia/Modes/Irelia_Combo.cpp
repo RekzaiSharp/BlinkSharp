@@ -14,13 +14,12 @@ auto Irelia_Combo::Combo_Tick() -> void
 		Combo_Gapcloser();
 		pIreliaCombo->ActiveMode = Irelia_Combo::ActiveModes::GapCloser;
 	}
-
-
-	/*if (E->Ready() && Q->Ready() && R->Ready() && Player.GetHealthPercent() > 50)
+	 /*if (E->Ready() && Q->Ready() && R->Ready() && Player.GetHealthPercent() > 50)
 		Combo_Fast();*/
 
 	if (Player.Distance(target) <= 600 || pIreliaCombo->ActiveMode == Irelia_Combo::ActiveModes::Trading)
 	{
+		pIreliaCombo->Combo_Killable();
 		pIreliaCombo->BasicTrade();
 		pIreliaCombo->ActiveMode = Irelia_Combo::ActiveModes::Trading;
 	}
@@ -29,8 +28,9 @@ auto Irelia_Combo::Combo_Tick() -> void
 auto Irelia_Combo::BasicTrade() -> void
 {
 	const auto target = pCore->TS->GetTarget(850);
-	
-	Gather_Stacks();
+
+	if (pIrelia->msc_stack)
+		Gather_Stacks();
 
 	if (pIrelia->E.IsReady() && !pIreliaCombo->first_cast)
 	{
@@ -41,7 +41,7 @@ auto Irelia_Combo::BasicTrade() -> void
 	if (pIrelia->E.IsReady() && pIreliaCombo->first_cast)
 	{
 		auto delay = Player.GetSpell(2).CastDelay;
-		auto pPos = Pred->BasePrediction(target, 850, delay, 1000, true);
+		auto pPos = Pred->BasePrediction(target, 850, delay, 1000, false);
 
 		if (pPos.IsValid())
 			SdkCastSpellLocalPlayer(nullptr, &pPos, 2, 0);
@@ -59,15 +59,25 @@ auto Irelia_Combo::Combo_Fast() -> void
 	//
 }
 
+auto Irelia_Combo::Combo_Killable() -> void
+{
+	auto target = pCore->TS->GetTarget(600, DamageType::Physical);
+
+	if (target)
+	{
+		if (target->GetHealth().Current <= Pred->PhysicalDamage(target, pIrelia->QDamage(false) + Player.GetAttackDamage()) && pIrelia->Q.IsReady())
+			pSDK->Control->CastSpell(0, target);
+	}
+}
+
 auto Irelia_Combo::Gather_Stacks() -> void
 {
-
-	if (Player.GetBuffCount("ireliapassivestacks", false, true) < 3 && pIrelia->Q.IsReady())
+	if (Player.GetBuffCount("ireliapassivestacks", false, true) < 4 && pIrelia->Q.IsReady())
 	{
 		auto minions = pSDK->EntityManager->GetEnemyMinions(600);
 		for (auto& minion : minions)
 		{
-			if (minion.second->GetHealth().Current <= pIrelia->Q.GetSpellDamage(minion.second) && pIrelia->Q.IsReady())
+			if (minion.second->GetHealth().Current <= Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true)) && pIrelia->Q.IsReady())
 				pSDK->Control->CastSpell(0, minion.second);
 		}
 	}
@@ -75,7 +85,7 @@ auto Irelia_Combo::Gather_Stacks() -> void
 
 auto Irelia_Combo::Combo_Gapcloser() -> void
 {
-	/*if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
+	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
 	{
 		const auto target = pCore->TS->GetTarget(600, DamageType::Physical);
 
@@ -84,11 +94,11 @@ auto Irelia_Combo::Combo_Gapcloser() -> void
 			auto minions = pSDK->EntityManager->GetEnemyMinions(600);
 			for (auto& minion : minions)
 			{
-				if (minion.second->GetHealth().Current <= Q->GetDamage() && !pIreliaCombo->gap_minion)
+				if (minion.second->GetHealth().Current <= Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true)) && !pIreliaCombo->gap_minion)
 				{
 					const auto distance = Player.Distance(minion.second);
 					const auto gap_target = pCore->TS->GetTarget(600 + distance);
-					if (gap_target && Q->Ready() && minion.second->IsAlive())
+					if (gap_target && pIrelia->Q.IsReady() && minion.second->IsAlive())
 					{
 						pIreliaCombo->gap_minion = minion.second;
 						SdkCastSpellLocalPlayer(nullptr, &Player.GetPosition(), 2, SPELL_CAST_START);
@@ -110,15 +120,15 @@ auto Irelia_Combo::Combo_Gapcloser() -> void
 			}
 		}
 
-		if (pIreliaCombo->gap_target && Q->Ready() && Player.Distance(pIreliaCombo->gap_target) <= 600)
+		if (pIreliaCombo->gap_target && pIrelia->Q.IsReady() && Player.Distance(pIreliaCombo->gap_target) <= 600)
 		{
 			auto delay = Player.GetSpell(2).CastDelay;
-			auto pPos = aPred->GetPredictedVector(pIreliaCombo->gap_target, 600, delay, 2000);
+			auto pPos = Pred->BasePrediction(target, 850, delay, 1000, true);
 
 			if (pPos.IsValid())
 				SdkCastSpellLocalPlayer(nullptr, &pPos, 2, SPELL_CAST_START);
 
-			if (pIreliaCombo->gap_target->HasBuff("ireliamark", false, true) && Q->Ready())
+			if (pIreliaCombo->gap_target->HasBuff("ireliamark", false, true) && pIrelia->Q.IsReady())
 			{
 				pSDK->Control->CastSpell(0, pIreliaCombo->gap_target);
 				pIreliaCombo->gap_target = nullptr;
@@ -127,7 +137,7 @@ auto Irelia_Combo::Combo_Gapcloser() -> void
 				pIreliaCombo->ActiveMode = ActiveModes::None;
 			}
 		}
-	}*/
+	}
 }
 
 std::unique_ptr<Irelia_Combo> pIreliaCombo = std::make_unique<Irelia_Combo>();

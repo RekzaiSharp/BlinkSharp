@@ -51,7 +51,7 @@ auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float
 	{
 		auto Waypoint = tNav.Waypoints[tNav.NextWaypoint];
 		auto orientation = tNav.Velocity; orientation.Normalize();
-		auto result = target->GetPosition() + target->GetMovementSpeed() * orientation * +castTime;
+		auto result = target->GetPosition() + target->GetMovementSpeed() * orientation * castTime;
 
 		bool isWall;
 		SdkIsLocationWall(&result, &isWall);
@@ -89,9 +89,10 @@ auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float
 		else
 			return target->GetPosition();
 	}
+
 }
 
-auto xPrediction::PhysicalDamage(AIHeroClient* target, float damage) -> float
+auto xPrediction::PhysicalDamage(AIBaseClient* target, float damage) -> float
 {
 	auto ArmorPenPercent = Player.GetPercentArmorPen();
 	auto ArmorPenFlat = Player.GetFlatArmorPen();
@@ -109,7 +110,7 @@ auto xPrediction::PhysicalDamage(AIHeroClient* target, float damage) -> float
 	return std::fmax(0, std::floor(value * damage));
 }
 
-auto xPrediction::MagicalDamage(AIHeroClient* target, float damage) -> float
+auto xPrediction::MagicalDamage(AIBaseClient* target, float damage) -> float
 {
 	auto MR = target->GetMagicResist();
 	auto MagicPenPercent = Player.GetPercentMagicPen();

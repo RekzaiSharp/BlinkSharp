@@ -18,6 +18,7 @@ public:
 	auto Combo_Tick() -> void;
 	auto BasicTrade() -> void;
 	auto Combo_Fast() -> void;
+	auto Combo_Killable() -> void;
 	auto Gather_Stacks() -> void;
 	auto Combo_Gapcloser()-> void;
 	float CastTick;
