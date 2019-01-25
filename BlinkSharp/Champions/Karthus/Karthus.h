@@ -13,7 +13,6 @@ public:
 	static void	__cdecl	Update(_In_ void* UserData);
 	static void	__cdecl	Draw(_In_ void* UserData);
 	static void __cdecl DrawMenu(_In_ void* UserData);
-	static Vector3 __cdecl get_circle_prediction(_In_ float spell_range, _In_ float cast_time);
 	static void __cdecl lay_waste();
 	static void __cdecl defile();
 	static void __cdecl wall();

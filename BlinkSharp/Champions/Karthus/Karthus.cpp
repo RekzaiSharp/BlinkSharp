@@ -58,8 +58,6 @@ void Karthus::Draw(void * UserData) {
 	}
 }
 
-//-----------
-
 ///Your menu settings go here
 void Karthus::DrawMenu(void * UserData) {
 	Menu::Tree("Q Settings", "QMenu", false, [&]() {
