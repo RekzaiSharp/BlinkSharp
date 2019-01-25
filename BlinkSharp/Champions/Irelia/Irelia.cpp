@@ -1,5 +1,6 @@
 #include "Irelia.h"
 #include "Modes/Irelia_Combo.h"
+#include "Modes/Irelia_Clear.hpp"
 
 extern PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
 SDKCOLOR purple = { 255, 0, 255, 255 };
@@ -36,6 +37,9 @@ void Irelia::Init() {
 void Irelia::Tick(void * UserData) {
 	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
 		pIreliaCombo->Combo_Tick();
+
+	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear))
+		pIreliaClear->Clear_Tick();
 
 }
 

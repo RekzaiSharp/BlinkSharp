@@ -164,6 +164,7 @@
     <ClCompile Include="Champions\Irelia\Irelia.cpp" />
     <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp" />
     <ClCompile Include="Champions\Soraka\Soraka.cpp" />
+    <ClCompile Include="Champions\Irelia\Modes\Irelia_Clear.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champions\Karthus\Karthus.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="Champions\Irelia\Irelia.h" />
     <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h" />
     <ClInclude Include="Champions\Soraka\Soraka.h" />
+    <ClInclude Include="Champions\Irelia\Modes\Irelia_Clear.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

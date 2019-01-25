@@ -36,6 +36,9 @@
     <ClCompile Include="Champions\Soraka\Soraka.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Champions\Irelia\Modes\Irelia_Clear.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\clipper.hpp">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Champions\Soraka\Soraka.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Modes\Irelia_Clear.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
