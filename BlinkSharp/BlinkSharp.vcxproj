@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;_WINDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -157,17 +157,49 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Prediction\ConePrediction.cpp" />
+    <ClCompile Include="Core\Prediction\ArcPrediction.cpp" />
+    <ClCompile Include="Core\Prediction\CirclePrediction.cpp" />
+    <ClCompile Include="Core\Prediction\Collision.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Arc.cpp" />
     <ClCompile Include="Champions\Karthus\Karthus.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Circle.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\clipper.cpp" />
+    <ClCompile Include="Core\Core.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Helpers.cpp" />
+    <ClCompile Include="Core\Prediction\LinePrediction.cpp" />
+    <ClCompile Include="Core\Prediction\sPrediction.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Include\clipper.cpp" />
     <ClCompile Include="Include\xPrediction.cpp" />
     <ClCompile Include="Champions\Irelia\Irelia.cpp" />
     <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp" />
-    <ClCompile Include="Champions\TwistedFate\TwistedFate.cpp" />
-    <ClCompile Include="Include\SPred.cpp" />
+    <ClCompile Include="Core\Prediction\PathTracker.cpp" />
+    <ClCompile Include="Core\Prediction\Utility.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Polygon.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Sector.cpp" />
+    <ClCompile Include="Core\Prediction\Geometry\Rectangle.cpp" />
+    <ClCompile Include="Core\Prediction\RingPrediction.cpp" />
+    <ClCompile Include="Core\Prediction\VectorPrediction.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Prediction\ConePrediction.h" />
+    <ClInclude Include="Core\Prediction\ArcPrediction.h" />
+    <ClInclude Include="Core\Prediction\CirclePrediction.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Arc.h" />
     <ClInclude Include="Champions\Karthus\Karthus.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Circle.h" />
+    <ClInclude Include="Core\Prediction\Geometry\clipper.hpp" />
+    <ClInclude Include="Core\Core.h" />
+    <ClInclude Include="Core\Prediction\Collision.h" />
+    <ClInclude Include="Core\Prediction\Geometry\ClipperWrapper.hpp" />
+    <ClInclude Include="Core\Prediction\Geometry\GlobalDef.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Helpers.h" />
+    <ClInclude Include="Core\Prediction\ISPrediction.h" />
+    <ClInclude Include="Core\Prediction\ISPredictionBase.h" />
+    <ClInclude Include="Core\Prediction\LinePrediction.h" />
+    <ClInclude Include="Core\Prediction\SDK\PluginData.h" />
+    <ClInclude Include="Core\Prediction\sPrediction.h" />
     <ClInclude Include="Include\clipper.hpp" />
     <ClInclude Include="Include\Common.hpp" />
     <ClInclude Include="Include\Game.hpp" />
@@ -195,8 +227,13 @@
     <ClInclude Include="Include\xPrediction.h" />
     <ClInclude Include="Champions\Irelia\Irelia.h" />
     <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h" />
-    <ClInclude Include="Champions\TwistedFate\TwistedFate.h" />
-    <ClInclude Include="Include\SPred.h" />
+    <ClInclude Include="Core\Prediction\PathTracker.h" />
+    <ClInclude Include="Core\Prediction\Utility.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Polygon.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Sector.h" />
+    <ClInclude Include="Core\Prediction\Geometry\Rectangle.h" />
+    <ClInclude Include="Core\Prediction\RingPrediction.h" />
+    <ClInclude Include="Core\Prediction\VectorPrediction.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

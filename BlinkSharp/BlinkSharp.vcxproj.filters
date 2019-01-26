@@ -18,9 +18,6 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Include\clipper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Include\xPrediction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -33,14 +30,143 @@
     <ClCompile Include="Champions\Karthus\Karthus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Champions\TwistedFate\TwistedFate.cpp">
+    <ClCompile Include="Core\Prediction\PathTracker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Include\SPred.cpp">
+    <ClCompile Include="Core\Core.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Utility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\clipper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Polygon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Circle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Arc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Sector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Geometry\Rectangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\Collision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\ArcPrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\CirclePrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\LinePrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\RingPrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\VectorPrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\ConePrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Prediction\sPrediction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Include\clipper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\xPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Irelia.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Karthus\Karthus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\SDK\PluginData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\PathTracker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Core.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Helpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Utility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Collision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\ClipperWrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\clipper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Polygon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Circle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Arc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Sector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\Geometry\Rectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\ArcPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\ISPredictionBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\ISPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\CirclePrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\LinePrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\RingPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\VectorPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\ConePrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Prediction\sPrediction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Include\clipper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -113,22 +239,7 @@
     <ClInclude Include="Include\Vectors.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\xPrediction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Champions\Irelia\Irelia.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Champions\Karthus\Karthus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Champions\TwistedFate\TwistedFate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Include\SPred.h">
+    <ClInclude Include="Core\Prediction\Geometry\GlobalDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

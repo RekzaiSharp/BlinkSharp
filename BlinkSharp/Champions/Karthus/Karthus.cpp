@@ -2,6 +2,7 @@
 #include <string>
 #include "../../Include/Spell.hpp"
 #include "../../Include/Menu.hpp"
+#include "../../Core/Prediction/sPrediction.h"
 
 AttackableUnit  Karthus::CurrentTarget;
 AttackableUnit* Karthus::OrbTarget;
@@ -81,10 +82,8 @@ void Karthus::lay_waste() {
 	auto target = pCore->TS->GetTarget(875.f);
 	if (is_spell_up(0) && Player.Distance(target) <= 875.f)
 	{
-		auto predPos = Pred->CircularPrediction(target, 0.675f, 875.f, 200.f);
-		if (predPos.IsValid()) {
-			SdkCastSpellLocalPlayer(nullptr, &predPos, 0, SPELL_CAST_START);
-		}
+		PredictionResult result = sPred->GetPrediction({target, 0.625f, 1000, 200.f, 875.f, true, eSpellType::kCircleCast, Player.GetPosition(), Player.GetPosition()});
+		pSDK->Control->CastSpell(0, &result.cast_position_);
 	}
 }
 

@@ -5,7 +5,6 @@
 #include "IControl.h"
 #include "IDamageLib.h"
 #include "IHealthPrediction.h"
-#include "xPrediction.h"
 
 struct SDK {
 	std::shared_ptr<IControl>			Control;
@@ -24,6 +23,7 @@ struct Essentials {
 	std::shared_ptr<IOrbwalker>		 Orbwalker;
 	//std::shared_ptr<IPrediction>	 Prediction;
 };
+
 
 __declspec(selectany) std::shared_ptr<SDK> pSDK;
 __declspec(selectany) std::shared_ptr<Essentials> pCore;
