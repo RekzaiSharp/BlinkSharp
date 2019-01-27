@@ -1,5 +1,4 @@
 #pragma once
-
 #include "../../Include/SDK Extensions.h"
 
 class Irelia {
@@ -15,6 +14,7 @@ public:
 	static void __cdecl DrawMenu(_In_ void* UserData);
 	static void __cdecl OnCreate(void* object, unsigned int* net_id, void* UserData);
 	static void __cdecl OnDelete(void* object, unsigned int* net_id, void* UserData);
+	static void __cdecl OnDash(AIHeroClient* Source, PSDKVECTOR StartPos, PSDKVECTOR EndPos, unsigned int StartTick, unsigned int Duration, float Speed);
 
 	static Spell::Targeted Q;
 	static Spell::Active W;
@@ -23,10 +23,11 @@ public:
 
 	struct stun_blade
 	{
-		void* object;
+		unsigned* net_id;
 		Vector3 position;
 	};
 
+	bool inDash = false;
 	stun_blade active_blade;
 
 	bool InFastCombo;
@@ -36,8 +37,9 @@ public:
 	bool combo_q = true;
 	int q_mode = 1;
 	bool combo_w = true;
-	int w_mode = 0;
+	int w_mode = 1;
 	bool combo_e = true;
+	int e_mode = 0;
 	bool combo_r = true;
 	int r_mode = 1;
 
@@ -46,6 +48,8 @@ public:
 
 	bool msc_stack = true;
 	bool msc_turrets = true;
+	bool msc_draw_blade = true;
+	bool msc_draw_clear = false;
 
 	bool drw_cd = true;
 	bool drw_q = true;

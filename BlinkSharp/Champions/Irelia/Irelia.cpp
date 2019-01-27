@@ -10,30 +10,27 @@ SDKVECTOR dir = { 0, 0, 1.f };
 AttackableUnit  Irelia::CurrentTarget;
 AttackableUnit* Irelia::OrbTarget;
 
-Spell::Targeted Irelia::Q(SpellSlot::W, 600, DamageType::Physical);
+Spell::Targeted Irelia::Q(SpellSlot::Q, 600, DamageType::Physical);
 Spell::Active Irelia::W(SpellSlot::W, 825, DamageType::Physical);
 Spell::Skillshot Irelia::E(SpellSlot::E, 850, SkillshotType::Line);
 Spell::Skillshot Irelia::R(SpellSlot::R, 1000, SkillshotType::Cone);
 
-///This gets called once, at load
 void Irelia::Init() {
 	CurrentTarget = AttackableUnit();
 	OrbTarget = NULL;
-	Game::PrintChat(R"([BlinkSharp] <font color="#00ffdc">Irelia</font> Loaded.)");
+	Game::PrintChat(R"([BlinkSharp] <font color="#00ffdc"><b>Irelia</b></font> Loaded.)");
 	
-
 #pragma region RegisterCallbacks
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Tick, Tick);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Update);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Overlay, DrawMenu);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Draw);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::CreateObject, OnCreate);
-	pSDK->EventHandler->RegisterCallback(CallbackEnum::CreateObject, OnDelete);
+	pSDK->EventHandler->RegisterCallback(CallbackEnum::DeleteObject, OnDelete);
+	pSDK->EventHandler->RegisterCallback(CallbackEnum::Dash, OnDelete);
 #pragma endregion
 }
 
-///This gets called 30 times per second, put your logics in here instead of
-///on OnUpdate so it doesnt drop too many fps
 void Irelia::Tick(void * UserData) {
 	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
 		pIreliaCombo->Combo_Tick();
@@ -44,11 +41,11 @@ void Irelia::Tick(void * UserData) {
 }
 
 void Irelia::Update(void * UserData) {
-	
+	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear))
+		pIreliaClear->Draw_Clear();
 }
 
 void Irelia::Draw(void * UserData) {
-	//SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(0).CastRange, &purple, 0, &dir);
 	if (pIrelia->drw_q  && pIrelia->Q.IsReady())
 		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(0).CastRange, &scf, 0, &dir);
 
@@ -58,45 +55,44 @@ void Irelia::Draw(void * UserData) {
 	if (pIrelia->draw_e && pIrelia->E.IsReady())
 		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(2).CastRange, &scf, 0, &dir);
 
-	if (pIrelia->draw_w && pIrelia->W.IsReady())
-		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(1).CastRange, &scf, 0, &dir);
-
-	if(pIrelia->draw_r && pIrelia->R.IsReady())
-		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(3).CastRange, &scf, 0, &dir);
+	if (pIrelia->msc_draw_blade && pIrelia->active_blade.net_id)
+		SdkDrawCircle(&pIrelia->active_blade.position, 10, &scf, 0, &dir);
 }
 
 void Irelia::OnCreate(void* object, unsigned int* net_id, void* UserData) 
 {
-	const char* name;
-	SdkGetObjectName(object, &name);
+	auto blade = pSDK->EntityManager->GetObjectFromPTR(object);
 
-	if (!Common::CompareLower(name, "ireliaemissile"))
+	const auto blade_name = Player.GetSkinID() > 0 ? "Irelia_Skin0" + std::to_string(Player.GetSkinID()) + "_E_Blades" : "Irelia_Base_E_Blades";
+	if (!Common::CompareLower(blade->GetName(), blade_name))
 		return;
 
-	Vector3 pos;
-	SdkGetObjectPosition(object, &pos);
-
-	if (pIrelia->active_blade.object == nullptr)
+	if (pIrelia->active_blade.net_id == nullptr)
 	{
-		pIrelia->active_blade.object = object;
-		pIrelia->active_blade.position = pos;
+		pIrelia->active_blade.net_id = net_id;
+		pIrelia->active_blade.position = blade->GetPosition();
 	}
-
 }
 
 void Irelia::OnDelete(void* object, unsigned* net_id, void* UserData)
 {
-	const char* name;
-	SdkGetObjectName(object, &name);
-
-	if (!Common::CompareLower(name, "ireliaemissile"))
-		return;
-
-	if (object == pIrelia->active_blade.object)
-		pIrelia->active_blade.object == nullptr;
+	if (net_id == pIrelia->active_blade.net_id)
+	{
+		pIrelia->active_blade.net_id = nullptr;
+		pIrelia->active_blade.position = Vector3(0, 0, 0);
+	}
 }
 
-///Your menu settings go here
+void Irelia::OnDash(AIHeroClient* Source, PSDKVECTOR StartPos, PSDKVECTOR EndPos, unsigned StartTick, unsigned Duration,
+	float Speed)
+{
+	if (Source->PTR() == Player.PTR())
+	{
+		pIrelia->inDash = true;
+		pSDK->EventHandler->DelayedAction([&] {pIrelia->inDash = false; }, Duration);
+	}
+}
+
 void Irelia::DrawMenu(void * UserData) {
 	bool visible(true); bool collapsed(true);
 	SdkUiBeginWindow("[BlinkSharp] Irelia", &visible, &collapsed);
@@ -110,23 +106,14 @@ void Irelia::DrawMenu(void * UserData) {
 			static const char* q_modes[] = { "Always", "Marked", "Smart" };
 			SdkUiCombo("Q Mode", &pIrelia->q_mode, q_modes, RTL_NUMBER_OF(q_modes), nullptr);
 			SdkUiCheckbox("Use W", &pIrelia->combo_w, nullptr);
-			static const char* w_modes[] = { "Defensive", "Offensive", "Attack Reset" };
+			static const char* w_modes[] = { "Defensive", "Offensive"};
 			SdkUiCombo("W Mode", &pIrelia->w_mode, w_modes, RTL_NUMBER_OF(w_modes), nullptr);
 			SdkUiCheckbox("Use E", &pIrelia->combo_e, nullptr);
+			static const char* e_modes[] = { "Auto", "Manual" };
+			SdkUiCombo("First E", &pIrelia->e_mode, e_modes, RTL_NUMBER_OF(e_modes), nullptr);
 			SdkUiCheckbox("Use R", &pIrelia->combo_r, nullptr);
 			static const char* r_modes[] = { "Fast", "Default"};
 			SdkUiCombo("R Mode", &pIrelia->r_mode, r_modes, RTL_NUMBER_OF(r_modes), nullptr);
-			SdkUiEndTree();
-		}
-
-		bool ws_open(false);
-		SdkUiBeginTree("Harass Settings", &qs_open);
-		if (qs_open)
-		{
-			// W Logics
-			// Ardent Slave
-			//Graploser
-
 			SdkUiEndTree();
 		}
 
@@ -145,6 +132,7 @@ void Irelia::DrawMenu(void * UserData) {
 		{
 			SdkUiCheckbox("Stack before Engage", &pIrelia->msc_stack, nullptr);
 			SdkUiCheckbox("Dont dive Turrets", &pIrelia->msc_turrets, nullptr);
+			SdkUiCheckbox("Draw Clear Path", &pIrelia->msc_draw_clear, nullptr);
 			SdkUiEndTree();
 		}
 
@@ -154,11 +142,9 @@ void Irelia::DrawMenu(void * UserData) {
 		{
 			SdkUiCheckbox("Draw Q", &pIrelia->drw_q, nullptr);
 			SdkUiCheckbox("Draw Extended Q", &pIrelia->drw_q_e, nullptr);
-			SdkUiCheckbox("Draw E", &pIrelia->draw_e, nullptr);
-			SdkUiCheckbox("Draw R", &pIrelia->draw_r, nullptr);
+			SdkUiCheckbox("Draw Blades", &pIrelia->msc_draw_blade, nullptr);
 			SdkUiEndTree();
 		}
-
 	}
 	SdkUiEndWindow();
 }

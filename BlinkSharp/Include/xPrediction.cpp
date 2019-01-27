@@ -122,13 +122,50 @@ auto xPrediction::MagicalDamage(AIBaseClient* target, float damage) -> float
 	return std::fmax(0, std::floor(value * damage));
 }
 
+auto xPrediction::FastPrediction(AIHeroClient* enemy, float delay) -> Vector3
+{
+	float va = 0.f;
+	if (enemy->IsFacing(Player.AsAIBaseClient()))
+	{
+		va = (50.f - enemy->GetBoundingRadius());
+	}
+	else
+	{
+		va = -(100.f - enemy->GetBoundingRadius());
+	}
+	auto dis = delay * enemy->GetMovementSpeed() + va;
+	auto path = enemy->NavInfo().Waypoints;
+	auto length = enemy->NavInfo().NumberOfWaypoints;
+	for (auto i = 0; i < length - 1; i++)
+	{
+		auto a = path[i].To2D();
+		auto b = path[i + 1].To2D();
+		auto d = a.Distance(b);
+
+		if (d < dis)
+		{
+			dis -= d;
+		}
+		else
+		{
+			return (Vector3)(a + dis * (b - a).Normalized());
+		}
+
+	}
+
+	return (Vector3)path[length - 1];
+}
+
 
 std::unique_ptr<xPrediction> Pred = std::make_unique<xPrediction>();
 
-auto xPrediction::IreliaPrediction(Irelia::stun_blade blade, AIHeroClient* target, float range, float castdelay,
+auto xPrediction::IreliaPrediction(Vector3 blade, AIHeroClient* target, float range, float castdelay,
 	float missilespeed) -> Vector3
 {
 	
+	if (!target->IsAlive())
+		return Vector3(0, 0, 0);
+
 	auto tNav = target->NavInfo();
 
 	if (tNav.IsDashing)
@@ -139,13 +176,13 @@ auto xPrediction::IreliaPrediction(Irelia::stun_blade blade, AIHeroClient* targe
 
 	if (tNav.Waypoints && tNav.NumberOfWaypoints)
 	{
-		float distance1 = target->Distance(blade.position);
+		float distance1 = target->Distance(blade);
 		auto Waypoint = tNav.Waypoints[tNav.NextWaypoint];
 		float distance2 = target->Distance(Waypoint);
 		float unitperms = target->GetMovementSpeed() / 1000;
 		float extensionValue = castdelay * unitperms;
 		Vector3 tPos = target->GetPosition();
-		Vector3 pPos = Player.GetPosition();
+		Vector3 pPos = blade;
 		auto extensionvec = Waypoint.Extended(tPos, (extensionValue + (target->GetBoundingRadius() / 2)));
 		auto extensionValue2 = ((extensionvec.Distance(pPos) / missilespeed) * 1000) * unitperms;
 
@@ -157,9 +194,11 @@ auto xPrediction::IreliaPrediction(Irelia::stun_blade blade, AIHeroClient* targe
 		if (distance3 < distance4)
 			return Vector3(0, 0, 0);
 
-		auto directiontVec = (extensionvec - blade.position).Normalized();
-		auto distance = Player.Distance(blade.position) + range;
+		auto directiontVec = (extensionvec - blade).Normalized();
+		auto distance = (target->Distance(blade) - Player.Distance(target)) + range;
 
-		return (distance * directiontVec) + extensionvec;
+		auto result = (distance * directiontVec) + blade;
+
+		return result;
 	}
 }

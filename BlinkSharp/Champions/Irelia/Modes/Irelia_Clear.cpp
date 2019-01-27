@@ -1,6 +1,8 @@
 #include "Irelia_Clear.hpp"
-#include "../../../Include/SDK Extensions.h"
 #include "../Irelia.h"
+
+SDKCOLOR redx = { 0, 0, 255, 255 };
+SDKVECTOR dirx = { 0, 0, 1.f };
 
 auto Irelia_Clear::Clear_Tick() -> void
 {
@@ -15,11 +17,37 @@ auto Irelia_Clear::Clear_Basic() -> void
 	{
 		if (minion.second->GetHealth().Current <= Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true)) && pIrelia->Q.IsReady() && minion.second->IsAlive())
 		{
-			Game::PrintChat("Minion Health: " + std::to_string(minion.second->GetHealth().Current));
-			Game::PrintChat("Estimated Damage: " + std::to_string(Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true))));
 			pSDK->Control->CastSpell(0, minion.second);
 		}
 			
+	}
+}
+
+auto Irelia_Clear::Draw_Clear() -> void
+{
+	if (pIrelia->msc_draw_clear)
+	{
+		pIreliaClear->Clear_Targets.clear();
+		auto minions = pSDK->EntityManager->GetEnemyMinions(1200);
+		for (auto& minion : minions)
+		{
+			if (minion.second->GetHealth().Current <= Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true)) && pIrelia->Q.IsReady() && minion.second->IsAlive())
+				pIreliaClear->Clear_Targets.emplace_back(minion.second);
+		}
+
+		if (pIreliaClear->Clear_Targets.size() > 1)
+		{
+			SdkDrawLine(&Player.GetPosition(), &pIreliaClear->Clear_Targets[0]->GetPosition(), 3, &redx, 0);
+			SdkDrawCircle(&pIreliaClear->Clear_Targets[0]->GetPosition(), pIreliaClear->Clear_Targets[0]->GetBoundingRadius(), &redx, 1, &dirx);
+			for (int i = 1; i <= pIreliaClear->Clear_Targets.size(); ++i)
+			{
+				if (pIreliaClear->Clear_Targets[i]->IsValid() && pIreliaClear->Clear_Targets[i - 1]->IsValid())
+				{
+					SdkDrawLine(&pIreliaClear->Clear_Targets[i - 1]->GetPosition(), &pIreliaClear->Clear_Targets[i]->GetPosition(), 3, &redx, 0);
+					SdkDrawCircle(&pIreliaClear->Clear_Targets[i]->GetPosition(), pIreliaClear->Clear_Targets[i]->GetBoundingRadius(), &redx, 1, &dirx);
+				}
+			}
+		}
 	}
 }
 
