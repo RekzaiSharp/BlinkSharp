@@ -79,29 +79,29 @@ PredictionResult LinePrediction::GetPrediction(PredictionInput input)
 			return result;
 		}
 
-		//if (GetTickCount() - g_EnemyInfo[input.target_->GetNetworkID()].last_aa_tick_ < 300)
-		//{
-		//	float arrival_t = m_prediction_engine.GetArrivalTime(Geometry::Helpers::Distance(Geometry::Helpers::To2D(input.from_), Geometry::Helpers::To2D(input.target_->ServerPosition())), input.spell_.delay_, input.spell_.missile_speed_);
-		//	if (GSpellData->GetAnimationDelay(input.target_->auto().Data_) + m_prediction_engine.GetPathTrackerEngine().GetAvgOrbwalkTime(input.target_) * 0.001f + input.avg_reaction_time_ * 0.001f - input.spell_.width_ * 0.5f / input.target_->MovementSpeed() >= arrival_t)
-		//	{
-		//		result.hit_chance_ = kHitChanceHigh;
-		//		result.cast_position_ = Geometry::Helpers::To2D(input.target_->ServerPosition());
-		//		result.unit_position_ = result.cast_position_;
+		if (GetTickCount() - g_EnemyInfo[input.target_->GetNetworkID()].last_aa_tick_ < 300)
+		{
+			float arrival_t = m_prediction_engine.GetArrivalTime(Geometry::Helpers::Distance(Geometry::Helpers::To2D(input.from_), Geometry::Helpers::To2D(input.target_->GetServerPosition())), input.spell_.delay_, input.spell_.missile_speed_);
+			if (input.target_->GetAttackDelay() + m_prediction_engine.GetPathTrackerEngine().GetAvgOrbwalkTime(input.target_) * 0.001f + input.avg_reaction_time_ * 0.001f - input.spell_.width_ * 0.5f / input.target_->GetMovementSpeed() >= arrival_t)
+			{
+				result.hit_chance_ = kHitChanceHigh;
+				result.cast_position_ = Geometry::Helpers::To2D(input.target_->GetServerPosition());
+				result.unit_position_ = result.cast_position_;
 
-		//		result.Lock();
-		//		return result;
-		//	}
-		//}
+				result.Lock();
+				return result;
+			}
+		}
 
-		/*if (input.avg_path_lenght_ < 400 && input.last_mov_change_time_ < 100 && Geometry::Helpers::PathLenght(input.path_) < input.avg_path_lenght_)
+		if (input.avg_path_lenght_ < 400 && input.last_mov_change_time_ < 100 && Geometry::Helpers::PathLenght(input.path_) < input.avg_path_lenght_)
 		{
 			result.hit_chance_ = kHitChanceHigh;
-			result.cast_position_ = Geometry::Helpers::To2D(input.path_.back());
+			result.cast_position_ = input.path_.back ().To2D ();
 			result.unit_position_ = result.cast_position_;
 
 			result.Lock();
 			return result;
-		}*/
+		}
 	}
 
 	if (input.target_->IsDashing())
@@ -112,11 +112,11 @@ PredictionResult LinePrediction::GetPrediction(PredictionInput input)
 
 	result = m_prediction_engine.WaypointAnalysis(input);
 
-	/*float d = Geometry::Helpers::Distance(result.cast_position_, Geometry::Helpers::To2D(input.target_->ServerPosition()));
-	if (d >= (input.avg_reaction_time_ - input.last_mov_change_time_) * input.target_->MovementSpeed() && d >= input.avg_path_lenght_)
+	float d = Geometry::Helpers::Distance(result.cast_position_, Geometry::Helpers::To2D(input.target_->GetServerPosition()));
+	if (d >= (input.avg_reaction_time_ - input.last_mov_change_time_) * input.target_->GetMovementSpeed() && d >= input.avg_path_lenght_)
 	{
 		result.hit_chance_ = kHitChanceMedium;
-	}*/
+	}
 
 	result.Lock();
 	return result;

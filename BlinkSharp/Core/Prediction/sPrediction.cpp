@@ -45,7 +45,7 @@ bool SPrediction::RunPrediction(AdvPredictionInput* Input, AdvPredictionOutput* 
 //	static void __cdecl OnProcessSpell(void* AI, PSDK_SPELL_CAST SpellCast, void* UserData);
 bool SPrediction::CastSpell(SDK_SPELL* spell, AIBaseClient* target, ePredictionChance hit_chance, bool aoe, uint8_t min_hit, eSpellType SpellType)
 {
-	PredictionInput input(target, spell);
+	PredictionInput input(target, spell->CastDelay, spell->MissileSpeed, spell->PrimaryCastRadius, spell->CastRange, eCollisionFlags::kCollidesWithMinions, SpellType, Player.GetPosition(), Player.GetPosition());
 	switch (SpellType)
 	{
 	case kLineCast:
@@ -121,7 +121,7 @@ bool SPrediction::CastSpell(SDK_SPELL* spell, AIBaseClient* target, ePredictionC
 
 bool SPrediction::CastArcSpell(SDK_SPELL* spell, AIBaseClient *target, ePredictionChance hit_chance, bool aoe, uint8_t min_hit)
 {
-	PredictionInput input(target, spell);
+	PredictionInput input (target, spell->CastDelay, spell->MissileSpeed, spell->PrimaryCastRadius, spell->CastRange, eCollisionFlags::kCollidesWithMinions, eSpellType::kConeCast, Player.GetPosition (), Player.GetPosition ());
 	if (!aoe)
 	{
 		PredictionResult result = ArcPrediction(*this).GetPrediction(input);
@@ -157,7 +157,7 @@ bool SPrediction::CastRingSpell(SDK_SPELL* spell, AIBaseClient *target, float ri
 
 bool SPrediction::CastVectorSpell(SDK_SPELL *spell, AIBaseClient *target, ePredictionChance hit_chance, bool aoe, uint8_t min_hit)
 {
-	PredictionInput input(target, spell);
+	PredictionInput input (target, spell->CastDelay, spell->MissileSpeed, spell->PrimaryCastRadius, spell->CastRange, eCollisionFlags::kCollidesWithMinions, eSpellType::kConeCast, Player.GetPosition (), Player.GetPosition ());
 	if (!aoe)
 	{
 		PredictionResult result = VectorPrediction(*this).GetPrediction(input);
@@ -177,11 +177,11 @@ bool SPrediction::CastVectorSpell(SDK_SPELL *spell, AIBaseClient *target, ePredi
 	return false;
 }
 
-PredictionResult SPrediction::GetPrediction(SDK_SPELL* spell, AIBaseClient *target)
-{
-	PredictionInput input(target, spell);
-	return GetPrediction(input);
-}
+//PredictionResult SPrediction::GetPrediction(SDK_SPELL* spell, AIBaseClient *target)
+//{
+//	//PredictionInput input(target, spell);
+//	return GetPrediction(input);
+//}
 
 PredictionResult SPrediction::GetPrediction(PredictionInput input)
 {
@@ -347,6 +347,7 @@ PredictionResult SPrediction::WaypointAnalysis(AIBaseClient *target, float width
 
 PredictionResult SPrediction::WaypointAnalysis(PredictionInput input, float move_speed)
 {
+
 	if (std::fpclassify(move_speed) == FP_ZERO)
 	{
 		move_speed = input.target_->GetMovementSpeed();

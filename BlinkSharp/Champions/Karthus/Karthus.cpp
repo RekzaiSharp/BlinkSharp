@@ -42,7 +42,10 @@ void Karthus::Tick(void * UserData) {
 		//JungleClear();
 	}
 	checkKillable();
-	
+
+	auto pos = Player.GetPosition ().To2D ();
+	Game::PrintChat ("X: " + std::to_string (pos.x) + " Y: " + std::to_string (pos.y));
+
 }
 
 ///This gets called X times per second, where X is your league fps.

@@ -63,9 +63,9 @@ struct PredictionInput
 	Vector3 from_;
 	Vector3 range_check_from_;
 
-	PredictionInput(AIBaseClient *target, SDK_SPELL *spell)
+	/*PredictionInput(AIBaseClient *target, SDK_SPELL *spell)
 	{
-		/*target_ = target;
+		target_ = target;
 		spell_.delay_ = spell->CastDelay();
 		spell_.missile_speed_ = spell->MissileSpeed();
 		spell_.width_ = spell->PrimaryCastRadius();
@@ -81,14 +81,14 @@ struct PredictionInput
 			last_angle_diff_ = dynamic_cast<SPrediction *>(g_Plugin)->GetPathTrackerEngine().GetLastAngleDiff(target);
 		}
 		from_ = Player.GetServerPosition();
-		spell_.ring_radius_ = 0;*/
-	}
+		spell_.ring_radius_ = 0;
+	}*/
 
-	PredictionInput(AIBaseClient *target, SDK_SPELL *spell, const Vector3& from)
-		: PredictionInput::PredictionInput(target, spell)
-	{
-		from_ = from;
-	}
+	//PredictionInput(AIBaseClient *target, SDK_SPELL *spell, const Vector3& from)
+	//	: PredictionInput::PredictionInput(target, spell)
+	//{
+	//	from_ = from;
+	//}
 
 	PredictionInput(AIBaseClient *target, float delay, float speed, float radius, float range, bool collision, eSpellType type, const Vector3& from, const Vector3& range_check_from)
 	{
@@ -99,13 +99,13 @@ struct PredictionInput
 		spell_.range_ = range;
 		spell_.collisionable_ = collision;
 		spell_.type_ = type;
-	//	path_ = target->GetWaypointList();
+		path_ = target->GetWaypoints();
 		if (target->IsHero())
 		{
-			/*avg_reaction_time_ = dynamic_cast<SPrediction *>(g_Plugin)->GetPathTrackerEngine().GetAvgMovChangeTime(target);
-			last_mov_change_time_ = dynamic_cast<SPrediction *>(g_Plugin)->GetPathTrackerEngine().GetLastMovChangeTime(target);
-			avg_path_lenght_ = dynamic_cast<SPrediction *>(g_Plugin)->GetPathTrackerEngine().GetAvgPathLenght(target);
-			last_angle_diff_ = dynamic_cast<SPrediction *>(g_Plugin)->GetPathTrackerEngine().GetLastAngleDiff(target);*/
+			avg_reaction_time_ = sPred->GetPathTrackerEngine().GetAvgMovChangeTime(target);
+			last_mov_change_time_ = sPred->GetPathTrackerEngine().GetLastMovChangeTime(target);
+			avg_path_lenght_ = sPred->GetPathTrackerEngine().GetAvgPathLenght(target);
+			last_angle_diff_ = sPred->GetPathTrackerEngine().GetLastAngleDiff(target);
 		}
 		from_ = from;
 		range_check_from_ = range_check_from;
