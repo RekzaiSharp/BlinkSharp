@@ -27,9 +27,10 @@ auto Irelia_Combo::Combo_Tick() -> void
 auto Irelia_Combo::BasicTrade() -> void
 {
 	const auto target = pCore->TS->GetTarget(850);
+	const auto targetq = pCore->TS->GetTarget(600);
 
 	if (pIrelia->msc_stack)
-		Gather_Stacks();
+		Gather_Stacks(targetq);
 
 	if (pIrelia->E.IsReady() && !pIrelia->active_blade.net_id && pIrelia->e_mode == 0)
 	{
@@ -42,7 +43,7 @@ auto Irelia_Combo::BasicTrade() -> void
 		auto delay = Player.GetSpell(2).CastDelay;
 		if (target->IsValid() && target->IsAlive())
 		{
-			auto pPos = Pred->IreliaPrediction(pIrelia->active_blade.position, target, 850, delay, 2000);
+			auto pPos = Pred->FastPrediction(pIrelia->active_blade.position, target, 50, 850);
 
 			if (pPos.IsValid())
 				SdkCastSpellLocalPlayer(nullptr, &pPos, 2, 0);
@@ -51,8 +52,14 @@ auto Irelia_Combo::BasicTrade() -> void
 		}
 	}
 
-	if (pIrelia->Q.IsReady() && target->HasBuff("ireliamark", false, true))
-		pSDK->Control->CastSpell(0, target);
+	auto enemies = pSDK->EntityManager->GetEnemyHeroes(600);
+
+	for (auto& enemy : enemies)
+	{
+		if (pIrelia->Q.IsReady() && enemy.second->HasBuff("ireliamark", false, true))
+			pSDK->Control->CastSpell(0, enemy.second);
+	}
+	
 }
 
 auto Irelia_Combo::Combo_Fast() -> void
@@ -76,12 +83,12 @@ auto Irelia_Combo::Combo_Killable() -> void
 	if (target)
 	{
 		if (target->GetHealth().Current <= Pred->PhysicalDamage(
-			target, pIrelia->QDamage(false) + Player.GetAttackDamage()) && pIrelia->Q.IsReady())
+			target, pIrelia->QDamage(false) + (Player.GetAttackDamage() * 3)) && pIrelia->Q.IsReady())
 			pSDK->Control->CastSpell(0, target);
 	}
 }
 
-auto Irelia_Combo::Gather_Stacks() -> void
+auto Irelia_Combo::Gather_Stacks(AIBaseClient* target) -> void
 {
 	if (Player.GetBuffCount("ireliapassivestacks", false, true) < 4 && pIrelia->Q.IsReady())
 	{
@@ -89,8 +96,10 @@ auto Irelia_Combo::Gather_Stacks() -> void
 		for (auto& minion : minions)
 		{
 			if (minion.second->GetHealth().Current <= Pred->PhysicalDamage(minion.second, pIrelia->QDamage(true)) &&
-				pIrelia->Q.IsReady())
+				pIrelia->Q.IsReady() && minion.second->Distance(target) <= 600)
+			{
 				pSDK->Control->CastSpell(0, minion.second);
+			}
 		}
 	}
 }

@@ -20,7 +20,7 @@ public:
 	auto Combo_Fast() -> void;
 	auto Combo_Melee() -> void;
 	auto Combo_Killable() -> void;
-	auto Gather_Stacks() -> void;
+	auto Gather_Stacks(AIBaseClient* target) -> void;
 	auto Combo_Gapcloser()-> void;
 	float CastTick;
 	ActiveModes ActiveMode;

@@ -122,38 +122,69 @@ auto xPrediction::MagicalDamage(AIBaseClient* target, float damage) -> float
 	return std::fmax(0, std::floor(value * damage));
 }
 
-auto xPrediction::FastPrediction(AIHeroClient* enemy, float delay) -> Vector3
+auto xPrediction::FastPrediction(Vector3 blade, AIBaseClient *Target, float delay, float range) -> Vector3
 {
-	float va = 0.f;
-	if (enemy->IsFacing(Player.AsAIBaseClient()))
-	{
-		va = (50.f - enemy->GetBoundingRadius());
-	}
-	else
-	{
-		va = -(100.f - enemy->GetBoundingRadius());
-	}
-	auto dis = delay * enemy->GetMovementSpeed() + va;
-	auto path = enemy->NavInfo().Waypoints;
-	auto length = enemy->NavInfo().NumberOfWaypoints;
-	for (auto i = 0; i < length - 1; i++)
-	{
-		auto a = path[i].To2D();
-		auto b = path[i + 1].To2D();
-		auto d = a.Distance(b);
+    SDKVECTOR emptyVec = { 0, 0, 0 };
+    auto tNav = Target->NavInfo();
+    float va = 0.f;
+    if (Player.IsFacing(Target))
+    {
+        va = (50.f - Target->GetBoundingRadius());
+    }
+    else
+    {
+        va = -(100.f - Target->GetBoundingRadius());
+    }
+    auto dis = delay * Target->GetMovementSpeed() + va;
+    auto path = tNav.Waypoints;
+    auto length = tNav.NumberOfWaypoints;
 
-		if (d < dis)
-		{
-			dis -= d;
-		}
-		else
-		{
-			return (Vector3)(a + dis * (b - a).Normalized());
-		}
+    if (tNav.Waypoints && tNav.NumberOfWaypoints) {
+        for (auto i = 0; i < length - 1; i++)
+        {
+            auto a = path[i];
+            auto b = path[i + 1];
+            auto d = a.Distance(b);
 
-	}
+            if (d < dis)
+            {
+                dis -= d;
+            }
+            else
+            {
+               auto extensionvec = (Vector3)(a + dis * (b - a).Normalized ());
+               auto directiontVec = (extensionvec - blade).Normalized();
+		         auto distance = (Target->Distance(blade) - Player.Distance(Target)) + range;
+		         auto result = (distance * directiontVec) + blade;
 
-	return (Vector3)path[length - 1];
+               return result;
+            }
+
+        }
+
+        auto extensionvec = (Vector3)path[length - 1];
+		auto directiontVec = (extensionvec - blade).Normalized();
+		auto distance = (Target->Distance(blade) - Player.Distance(Target)) + range;
+		auto result = (distance * directiontVec) + blade;
+
+        return result;
+    }
+
+    else {
+
+        if (Player.Distance(Target) > range) {
+            return emptyVec;
+        }
+
+        else
+        {
+			  auto directiontVec = (Target->GetPosition() - blade).Normalized();
+		      auto distance = (Target->Distance(blade) - Player.Distance(Target)) + range;
+		      auto result = (distance * directiontVec) + blade;
+
+            return result;
+        }
+    }
 }
 
 
@@ -196,7 +227,6 @@ auto xPrediction::IreliaPrediction(Vector3 blade, AIHeroClient* target, float ra
 
 		auto directiontVec = (extensionvec - blade).Normalized();
 		auto distance = (target->Distance(blade) - Player.Distance(target)) + range;
-
 		auto result = (distance * directiontVec) + blade;
 
 		return result;

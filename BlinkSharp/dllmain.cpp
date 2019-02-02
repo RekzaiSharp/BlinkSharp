@@ -9,7 +9,7 @@ SDK_EVENT(void) OnLoad(void* UserData) {
 	LOAD_ENVIRONMENT();
 
 	if (Player.PTR() && pSDK && pCore) {
-		Game::PrintChat(R"([BlinkSharp] <font color="#ff2d00">Core</font> Loaded.)");
+		Game::PrintChat(R"([RiftSharp] <font color="#ff2d00">Core</font> Loaded.)");
 
 		if (Common::CompareLower(Player.GetCharName(), "irelia"))
 			Irelia::Init();

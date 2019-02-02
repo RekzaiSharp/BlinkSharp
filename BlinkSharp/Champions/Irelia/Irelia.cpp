@@ -18,17 +18,24 @@ Spell::Skillshot Irelia::R(SpellSlot::R, 1000, SkillshotType::Cone);
 void Irelia::Init() {
 	CurrentTarget = AttackableUnit();
 	OrbTarget = NULL;
-	Game::PrintChat(R"([BlinkSharp] <font color="#00ffdc"><b>Irelia</b></font> Loaded.)");
+	Game::PrintChat(R"([RiftSharp] <font color="#00ffdc"><b>Irelia</b></font> Loaded.)");
 	
 #pragma region RegisterCallbacks
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Tick, Tick);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Update);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Overlay, DrawMenu);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Draw);
+	SdkRegisterOnAIProcessSpell (OnProcessSpell, nullptr);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::CreateObject, OnCreate);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::DeleteObject, OnDelete);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Dash, OnDelete);
 #pragma endregion
+/*
+#pragma region PredictionCallbacks
+	pSDK->EventHandler->RegisterCallback (CallbackEnum::Update, Prediction::PathingObserver::OnUpdate);
+	pSDK->EventHandler->RegisterCallback (CallbackEnum::NewPath, Prediction::PathingObserver::OnMove);
+	pSDK->EventHandler->RegisterCallback (CallbackEnum::Attack, Prediction::PathingObserver::OnAttack);
+#pragma endregion*/
 }
 
 void Irelia::Tick(void * UserData) {
@@ -59,26 +66,43 @@ void Irelia::Draw(void * UserData) {
 		SdkDrawCircle(&pIrelia->active_blade.position, 10, &scf, 0, &dir);
 }
 
-void Irelia::OnCreate(void* object, unsigned int* net_id, void* UserData) 
+void Irelia::OnCreate(void* Object, unsigned int NetworkID, void* UserData)
 {
-	auto blade = pSDK->EntityManager->GetObjectFromPTR(object);
+	auto blade = pSDK->EntityManager->GetObjectFromPTR(Object);
+
+	if (blade == nullptr)
+		return;
+	if (!blade->IsValid())
+		return;
 
 	const auto blade_name = Player.GetSkinID() > 0 ? "Irelia_Skin0" + std::to_string(Player.GetSkinID()) + "_E_Blades" : "Irelia_Base_E_Blades";
 	if (!Common::CompareLower(blade->GetName(), blade_name))
 		return;
 
-	if (pIrelia->active_blade.net_id == nullptr)
+	if (pIrelia->active_blade.net_id == NULL)
 	{
-		pIrelia->active_blade.net_id = net_id;
+		pIrelia->active_blade.net_id = NetworkID;
 		pIrelia->active_blade.position = blade->GetPosition();
 	}
 }
 
-void Irelia::OnDelete(void* object, unsigned* net_id, void* UserData)
+void Irelia::OnProcessSpell(void* AI, PSDK_SPELL_CAST SpellCast, void* UserData)
 {
-	if (net_id == pIrelia->active_blade.net_id)
+	if (SpellCast->TargetObject == Player.PTR() && pIrelia->W.IsReady() && pIrelia->w_mode == 0)
 	{
-		pIrelia->active_blade.net_id = nullptr;
+		if ( std::find(pIrelia->wSpells.begin(), pIrelia->wSpells.end(), SpellCast->Spell.ScriptName) != pIrelia->wSpells.end())
+		{
+			pSDK->Control->CastSpell (1, false);
+			
+		}
+	}
+}
+
+void Irelia::OnDelete(void* Object, unsigned int NetworkID, void* UserData)
+{
+	if (NetworkID == pIrelia->active_blade.net_id)
+	{
+		pIrelia->active_blade.net_id = NULL;
 		pIrelia->active_blade.position = Vector3(0, 0, 0);
 	}
 }
@@ -95,7 +119,7 @@ void Irelia::OnDash(AIHeroClient* Source, PSDKVECTOR StartPos, PSDKVECTOR EndPos
 
 void Irelia::DrawMenu(void * UserData) {
 	bool visible(true); bool collapsed(true);
-	SdkUiBeginWindow("[BlinkSharp] Irelia", &visible, &collapsed);
+	SdkUiBeginWindow("[RiftSharp] Irelia", &visible, &collapsed);
 	if (collapsed && visible)
 	{
 		bool qs_open(false);
@@ -142,6 +166,7 @@ void Irelia::DrawMenu(void * UserData) {
 		{
 			SdkUiCheckbox("Draw Q", &pIrelia->drw_q, nullptr);
 			SdkUiCheckbox("Draw Extended Q", &pIrelia->drw_q_e, nullptr);
+         SdkUiCheckbox("Draw E", &pIrelia->draw_e, nullptr);
 			SdkUiCheckbox("Draw Blades", &pIrelia->msc_draw_blade, nullptr);
 			SdkUiEndTree();
 		}
