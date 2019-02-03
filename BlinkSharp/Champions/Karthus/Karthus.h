@@ -23,6 +23,12 @@ public:
 	static float __cdecl GetQDamage();
 	static void __cdecl LaneClear();
 	static void __cdecl JungleClear();
+
+	static Spell::Skillshot Q;
+	static Spell::Skillshot W;
+	static Spell::Active E;
+	static Spell::Active R;
+	
 };
 
 extern std::unique_ptr<Karthus> pKarthus;

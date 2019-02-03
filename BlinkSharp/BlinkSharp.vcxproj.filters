@@ -39,6 +39,9 @@
     <ClCompile Include="Include\SPred.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Champions\Katarina\Katarina.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\clipper.hpp">
@@ -129,6 +132,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\SPred.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Katarina\Katarina.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

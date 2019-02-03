@@ -3,7 +3,7 @@
 
 auto SPred::GetDirectionDifferencePerc(Vector3 dir1, Vector3 dir2) -> float
 {
-	return Vector3(dir1.Normalized * 100 - dir2.Normalized * 100).Length / 2;
+	return Vector3(dir1.Normalized() * 100 - dir2.Normalized() * 100).Length() / 2.f;
 }
 
 auto SPred::GetBaitLevel(AIHeroClient* unit)->float
@@ -18,7 +18,8 @@ auto SPred::VectorMovementCollision(_In_ Vector3 startPoint1, _In_ Vector3 endPo
 {
 	float sP1x = startPoint1.x, sP1y = startPoint1.z or startPoint1.y, eP1x = endPoint1.x, eP1y = endPoint1.z or endPoint1.y, sP2x = startPoint2.x, sP2y = startPoint2.z or startPoint2.y;
 	float d = eP1x - sP1x, e = eP1y - sP1y;
-	float dist = std::sqrt(d * d + e * e), t1 = INFINITY, t2 = INFINITY;
+	float dist = std::sqrt(d * d + e * e);
+	t1 = INFINITY, t2 = INFINITY;
 	float S = 0.f, K = 0.f;
 	if (dist != 0.f)
 		S = v1 * d / dist, K = v1 * e / dist;
@@ -85,7 +86,7 @@ auto SPred::PredictPos(AIHeroClient* target, float delay, AIHeroClient* source, 
 	auto dir = target->GetPosition().DirectionVector;
 	Vector3 pos;
 	hitbox = target->GetBoundingRadius();
-	if (dir.IsValid && target->IsMoving()) {
+	if (dir.IsValid() && target->IsMoving()) {
 		if (speed != 0.f) {
 			float t1, t2;
 			Vector2 p1, p2;

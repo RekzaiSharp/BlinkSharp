@@ -3,12 +3,17 @@
 #include "../../Include/Spell.hpp"
 #include "../../Include/Menu.hpp"
 
+extern PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
 AttackableUnit  Karthus::CurrentTarget;
 AttackableUnit* Karthus::OrbTarget;
 SDKCOLOR _g_ColorPurple;
+SDKCOLOR idk = {0, 0, 255, 255};
 SDKVECTOR _g_DirectionVector;
 DWORD LastNotifyTick;
-SDKPOINT textPos;
+
+Spell::Skillshot Karthus::Q(SpellSlot::Q, 875, SkillshotType::Circle);
+Spell::Active Karthus::E(SpellSlot::E, 850, DamageType::Magical);
+Spell::Active Karthus::R(SpellSlot::R, 1000, DamageType::Magical);
 
 ///This gets called once, at load
 void Karthus::Init() {
@@ -17,7 +22,6 @@ void Karthus::Init() {
 	_g_ColorPurple = { 5, 15, 0, 22 };
 	_g_DirectionVector = { 0, 0, 1.f };
 	LastNotifyTick = GetTickCount();
-	textPos = new SDKPOINT(800.f, 800.f);
 
 #pragma region RegisterCallbacks
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Tick, Karthus::Tick);
@@ -38,10 +42,12 @@ void Karthus::Tick(void * UserData) {
 	}
 	else if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear)) {
 		if (Menu::Get<bool>("Menu.FarmQ")) { LaneClear(); }
-		//JungleClear();
+		if (Menu::Get<bool>("Menu.JglQ")) { JungleClear(); }
 	}
-	checkKillable();
-	
+	else if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Mixed)) {
+		if (Menu::Get<bool>("Menu.UseMQ")) { lay_waste(); }
+		if (Menu::Get<bool>("Menu.UseMW")) { wall(); }
+	}
 }
 
 ///This gets called X times per second, where X is your league fps.
@@ -56,6 +62,23 @@ void Karthus::Draw(void * UserData) {
 	if (Menu::Get<bool>("Menu.DrawQ")) {
 		SdkDrawCircle(&Player.GetPosition(), 875.f, &_g_ColorPurple, 0, &_g_DirectionVector);
 	}
+
+	// Should work :pepedumb:
+	if (Menu::Get<bool>("Menu.NotifyR"))
+	{
+		auto enemies = pSDK->EntityManager->GetEnemyHeroes();
+		int scuffed = 0;
+		for (auto& enemy : enemies)
+		{
+			if (enemy.second->GetHealth().Current <= Pred->MagicalDamage(enemy.second, GetRDamage()) && enemy.second->GetHealth().Current >= 1 && R.IsReady())
+			{
+				SDKPOINT loc = { 100.f, 10.f + (20.f * scuffed) };
+				std::string text = std::string(enemy.second->GetCharName()) + " is killable";
+				SdkDrawText(nullptr, &loc, text.c_str(), "Arial", &idk, 24, 0, 0, false);
+			}
+			scuffed++;
+		}
+	}
 }
 
 ///Your menu settings go here
@@ -63,10 +86,13 @@ void Karthus::DrawMenu(void * UserData) {
 	Menu::Tree("Q Settings", "QMenu", false, [&]() {
 		Menu::Checkbox("Draw Q", "Menu.DrawQ", true);
 		Menu::Checkbox("Use Q in Combo", "Menu.UseQ", true);
+		Menu::Checkbox("Use Q in Mixed", "Menu.UseMQ", true);
 		Menu::Checkbox("Use Q in LaneClear (WIP)", "Menu.FarmQ", false);
+		Menu::Checkbox("Use Q in JungleClear (very WIP)", "Menu.JglQ", false);
 	});
 	Menu::Tree("W Settings", "WMenu", false, [&]() {
 		Menu::Checkbox("Use W in Combo", "Menu.UseW", true);
+		Menu::Checkbox("Use W in Mixed", "Menu.UseMW", true);
 	});
 	Menu::Tree("E Settings", "EMenu", false, [&]() {
 		Menu::Checkbox("Use E in Combo", "Menu.UseE", true);
@@ -81,7 +107,7 @@ void Karthus::lay_waste() {
 	auto target = pCore->TS->GetTarget(875.f);
 	if (is_spell_up(0) && Player.Distance(target) <= 875.f)
 	{
-		auto predPos = Pred->CircularPrediction(target, 0.675f, 875.f, 200.f);
+		auto predPos = Pred->CircularPrediction(target, 0.75f, 900.f, 200.f);
 		if (predPos.IsValid()) {
 			SdkCastSpellLocalPlayer(nullptr, &predPos, 0, SPELL_CAST_START);
 		}
@@ -106,7 +132,7 @@ void Karthus::wall()
 	auto target = pCore->TS->GetTarget(900.f);
 	if (is_spell_up(1) && Player.Distance(target) <= 900.f)
 	{
-		auto predPos = Pred->CircularPrediction(target, 0.7f, 900.f, 50.f);
+		auto predPos = Pred->CircularPrediction(target, 0.7f, 850.f, 50.f);
 		if (predPos.IsValid()) {
 			SdkCastSpellLocalPlayer(nullptr, &predPos, 1, SPELL_CAST_START);
 		}
@@ -118,8 +144,10 @@ void Karthus::LaneClear()
 	auto minions = pSDK->EntityManager->GetEnemyMinions(900.f);
 
 	for (auto& minion : minions) {
-		if (is_spell_up(0) && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) < GetQDamage() && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) > 0.f) {
-			pSDK->Control->CastSpell(0, minion.second, false);
+		if (!Common::CompareLower(minion.second->GetName(), "thedoomball")) {
+			if (is_spell_up(0) && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) < GetQDamage() && pSDK->HealthPred->GetHealthPrediction(minion.second, 15, false) > 0.f) {
+				pSDK->Control->CastSpell(0, minion.second, false);
+			}
 		}
 	}
 }
@@ -129,7 +157,10 @@ void Karthus::JungleClear()
 	auto monsters = pSDK->EntityManager->GetJungleMonsters(900.f);
 
 	for (auto& monster : monsters) {
-		if (is_spell_up(0)) {
+		if (is_spell_up(0) && Player.Distance(monster.second) <= 900.f && !Common::CompareLower(monster.second->GetName(), "plantvision") && 
+			!Common::CompareLower(monster.second->GetName(), "camprespawn") && !Common::CompareLower(monster.second->GetName(), "plantsatchel") && !Common::CompareLower(monster.second->GetName(), "planthealthpack")
+			&& !Common::CompareLower(monster.second->GetName(), "planthealth") && !Common::CompareLower(monster.second->GetName(), "planthealthmirrored") &&
+			!Common::CompareLower(monster.second->GetName(), "k") && !Common::CompareLower(monster.second->GetName(), "wardcorpse") && !Common::CompareLower(monster.second->GetName(), "hiddenminion")) {
 			pSDK->Control->CastSpell(0, monster.second, false);
 		}
 	}
@@ -158,11 +189,12 @@ auto Karthus::checkKillable() -> void
 
 	for (auto& enemy : enemies)
 	{
-
-		if (enemy.second->GetHealth().Current < Pred->MagicalDamage(enemy.second, GetRDamage()) && enemy.second->IsAlive() && CanNotify() && is_spell_up(3) && enemy.second->IsVisible())
+		
+		if (enemy.second->GetHealth().Current < Pred->MagicalDamage(enemy.second, GetRDamage()) && enemy.second->IsAlive() && is_spell_up(3) && enemy.second->IsVisible() && CanNotify())
 		{
 			if (Menu::Get<bool>("Menu.NotifyR")) {
-				Game::PrintChat("[" + std::to_string((int)(floor(Game::Time() / 60))) + ":" + std::to_string((int)Game::Time() % 60) + "] " + std::string(enemy.second->GetCharName()) + " killable with R.", CHAT_FLAG_TURQUOISE);
+				Game::PrintChat("[" + std::to_string((int)(floor(Game::Time() / 60))) + ":" + std::to_string((int)Game::Time() % 60) + "] " 
+					+ std::string(enemy.second->GetCharName()) + " killable with R.", CHAT_FLAG_TURQUOISE);
 			}
 			LastNotifyTick = GetTickCount();
 		}

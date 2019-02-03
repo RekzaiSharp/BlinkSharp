@@ -6880,7 +6880,7 @@ typedef struct _SDK_CONTEXT
 //++
 //
 // SDKSTATUS
-// SdkGetObjectNetworkID(
+// SdkGetObject	(
 //		_In_ void* Object,
 //		_Out_ unsigned int* NetworkID
 // )

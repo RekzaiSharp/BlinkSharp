@@ -165,6 +165,7 @@
     <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp" />
     <ClCompile Include="Champions\TwistedFate\TwistedFate.cpp" />
     <ClCompile Include="Include\SPred.cpp" />
+    <ClCompile Include="Champions\Katarina\Katarina.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Champions\Karthus\Karthus.h" />
@@ -197,6 +198,7 @@
     <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h" />
     <ClInclude Include="Champions\TwistedFate\TwistedFate.h" />
     <ClInclude Include="Include\SPred.h" />
+    <ClInclude Include="Champions\Katarina\Katarina.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

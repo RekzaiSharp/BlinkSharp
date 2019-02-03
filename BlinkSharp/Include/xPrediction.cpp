@@ -43,15 +43,36 @@ auto xPrediction::BasePrediction(AIHeroClient* target, float range, float castde
 	}
 }
 
+static Vector3 CalculateVelocity(Vector3 start, Vector3 end, float speed)
+{
+	auto vector = end - start;
+	auto d = (float)sqrt(vector.DotProduct(vector));
+	return vector / d * speed;
+}
+
+/*
+static bool attackStartTime(void* AI, void* TargetObject, bool StartAttack, bool StopAttack, void* UserData) {
+	float AAEndTime;
+	float windup;
+	SdkGetAIAttackDelay(AI, &windup);
+	if (StartAttack) {
+		AAEndTime = Game::Time() + windup;
+		if (AAEndTime < Game::Time())
+			return true;
+	}
+}
+*/
+
 auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float range, float radius) -> Vector3
 {
 	
 	auto tNav = target->NavInfo();
-
+	
 	if (tNav.Waypoints && tNav.NumberOfWaypoints)
 	{
 		auto Waypoint = tNav.Waypoints[tNav.NextWaypoint];
-		auto orientation = tNav.Velocity; orientation.Normalize();
+		//auto orientation = tNav.Velocity; orientation.Normalize();
+		auto orientation = CalculateVelocity(tNav.StartPos, tNav.EndPos, target->GetMovementSpeed()); orientation.Normalize();
 		auto result = target->GetPosition() + target->GetMovementSpeed() * orientation * +castTime;
 		
 		/*
@@ -69,7 +90,6 @@ auto xPrediction::CircularPrediction(AIHeroClient* target, float castTime, float
 
 		float waydist = target->Distance(Waypoint);
 		float preddist = target->Distance(result);
-		
 
 		if (preddist > waydist)
 		{
