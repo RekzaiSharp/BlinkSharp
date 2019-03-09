@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4242 4244)
 #include <algorithm>
+#pragma warning(pop)
 
 #define DEBUG_PRINT false
 
@@ -8,11 +11,11 @@
 UNREFERENCED_PARAMETER(hinstDLL); \
 \
 if (fdwReason != DLL_PROCESS_ATTACH) \
-return false; \
+return TRUE; \
 \
 SDK_EXTRACT_CONTEXT(lpvReserved); \
 if (!SDK_CONTEXT_GLOBAL || !SDKSTATUS_SUCCESS(SdkNotifyLoadedModule(NAME, SDK_VERSION))) { \
-	return false; \
+	return FALSE; \
 }
 
 #define CheckLocalPlayer() \
@@ -75,8 +78,6 @@ TYPE NAME##(){                                        \
     return _##NAME;                                     \
 }
 
-#define SDK_EVENT(T) static T __cdecl 
-
 #define BAD_BUFFER_CHECK(Buffer, Actual, Expected) \
 if (Actual < Expected) { \
 	SdkUiConsoleWrite("[error] Bad buffer size: need at least %zu bytes, but got only %zu bytes instead.\n", (size_t)Expected, (size_t)Actual); \
@@ -90,7 +91,7 @@ if (IsBadWritePtr(Buffer, Actual)) { \
 // 
 #define PLUGIN_SETUP(NAME, LOAD_FUNC) \
 \
-void __cdecl OnLoad(void* UserData);\
+void __cdecl LOAD_FUNC(void* UserData);\
 \
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {\
 	_CrtSetDbgFlag(0); \
@@ -98,7 +99,7 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     \
 	SdkRegisterOnLoad(LOAD_FUNC, NULL);\
 	\
-	return true;\
+	return TRUE;\
 }
 
 #define MAKE_INTERFACE(TYPE, NAME) \

@@ -1,6 +1,8 @@
 #pragma once
 
+#pragma warning(push, 0)
 #include <memory>
+#pragma warning(pop)
 
 #include "Vectors.hpp"
 #include "sdkapi.h"
@@ -27,36 +29,180 @@ struct NavData {
 };
 
 enum class GameObjectType {
-	NeutralMinionCamp,
-	FollowerObject,
-	FollowerObjectWithLerpMovement,
-	AIHeroClient,
-	obj_AI_Marker,
-	obj_AI_Minion,
-	LevelPropAI,
-	obj_AI_Turret,
-	obj_AI_TurretCommon,
-	obj_GeneralParticleEmitter,
-	TypeGameObject,
-	MissileClient,
-	DrawFX,
-	UnrevealedTarget,
-	obj_BarracksDampener,
-	obj_Barracks = 15,
-	obj_AnimatedBuilding,
-	obj_Building,
-	obj_Lake,
-	obj_Levelsizer,
-	obj_NavPoint,
-	obj_SpawnPoint,
-	obj_LampBulb,
-	GrassObject,
-	obj_HQ = 22,
-	obj_InfoPoint,
-	LevelPropGameObject,
-	LevelPropSpawnerPoint,
-	obj_Shop,
-	obj_Turret
+	AIHeroClient = 1,
+	obj_AI_Minion = 3,
+	obj_AI_Turret = 6,
+	obj_GeneralParticleEmitter = 8,
+	MissileClient = 10,
+	obj_BarracksDampener = 13,
+	obj_HQ = 21,
+	LevelPropGameObject = 23,
+	obj_Shop = 25,
+};
+
+__declspec(selectany) std::map<unsigned char, bool> cantProcessAttackBuffs {
+	{ (unsigned char)BUFF_TYPE_STUN, true},
+	{ (unsigned char)BUFF_TYPE_TAUNT, true},
+	{ (unsigned char)BUFF_TYPE_POLYMORPH, true},
+	{ (unsigned char)BUFF_TYPE_FEAR, true} ,
+	{ (unsigned char)BUFF_TYPE_CHARM, true} ,
+	{ (unsigned char)BUFF_TYPE_SUPPRESSION, true} ,
+	{ (unsigned char)BUFF_TYPE_BLIND, true}, 
+	{ (unsigned char)BUFF_TYPE_FLEE, true},
+	{ (unsigned char)BUFF_TYPE_KNOCKUP, true} ,
+	{ (unsigned char)BUFF_TYPE_KNOCKBACK, true}, 
+	{ (unsigned char)BUFF_TYPE_DISARM, true}, 
+	{ (unsigned char)BUFF_TYPE_ASLEEP, true} 
+};
+
+__declspec(selectany) std::map<unsigned char, bool> cantProcessMovementBuffs{
+	{ (unsigned char)BUFF_TYPE_STUN, true},
+	{ (unsigned char)BUFF_TYPE_TAUNT, true},
+	{ (unsigned char)BUFF_TYPE_POLYMORPH, true},
+	{ (unsigned char)BUFF_TYPE_SNARE, true},
+	{ (unsigned char)BUFF_TYPE_FEAR, true},
+	{ (unsigned char)BUFF_TYPE_CHARM, true},
+	{ (unsigned char)BUFF_TYPE_SUPPRESSION, true},
+	{ (unsigned char)BUFF_TYPE_FLEE, true},
+	{ (unsigned char)BUFF_TYPE_KNOCKUP, true},
+	{ (unsigned char)BUFF_TYPE_KNOCKBACK, true},
+	{ (unsigned char)BUFF_TYPE_ASLEEP, true}
+};
+
+__declspec(selectany) std::map<unsigned char, bool> immobileBuffs{
+	{ (unsigned char)BUFF_TYPE_STUN, true},
+	{ (unsigned char)BUFF_TYPE_SNARE, true},
+	{ (unsigned char)BUFF_TYPE_SUPPRESSION, true},
+	{ (unsigned char)BUFF_TYPE_KNOCKUP, true},
+	{ (unsigned char)BUFF_TYPE_ASLEEP, true}
+};
+
+enum class SpellDangerLevel {
+	Low,
+	Medium,
+	High,
+	VeryHigh
+};
+struct InterruptibleSpellData {
+	unsigned char Slot;
+	std::string Name;
+	SpellDangerLevel DangerLevel;
+	bool MovementInterrupts;	
+};
+
+__declspec(selectany) std::map<std::string, std::vector<InterruptibleSpellData>> InterruptibleSpells{
+	{"Caitlyn", {
+			{3, "CaitlynAceintheHole", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"FiddleSticks", {
+			{1, "Drain", SpellDangerLevel::Medium, true},
+			{3, "Crowstorm", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Janna", {
+			{3, "ReapTheWhirlwind", SpellDangerLevel::Medium, true},
+		}
+	},
+	{"Jhin", {
+			{3, "JhinR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Karthus", {
+			{3, "KarthusFallenOne", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Katarina", {
+			{3, "KatarinaR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Lucian", {
+			{3, "LucianR", SpellDangerLevel::High, false},
+		}
+	},
+	{"Lux", {
+			{3, "LuxMaliceCannon", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Malzahar", {
+			{3, "MalzaharR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"MasterYi", {
+			{1, "Meditate", SpellDangerLevel::Low, true},
+		}
+	},
+	{"MissFortune", {
+			{3, "MissFortuneBulletTime", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Neeko", {
+			{3, "NeekoR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Nunu", {
+			{3, "NunuR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Pantheon", {
+			{2, "PantheonE", SpellDangerLevel::Low, true},
+			{3, "PantheonRJump", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Quinn", {
+			{3, "QuinnR", SpellDangerLevel::High, true},
+		}
+	},
+	{"Shen", {
+			{3, "ShenR", SpellDangerLevel::Low, true},
+		}
+	},
+	{"Sion", {
+			{0, "SionQ", SpellDangerLevel::High, true},
+		}
+	},	
+	{"TahmKench", {
+			{3, "TahmKenchNewR", SpellDangerLevel::High, true},
+		}
+	},
+	{"TwistedFate", {
+			{3, "Destiny", SpellDangerLevel::Medium, true},
+		}
+	},
+	{"Velkoz", {
+			{3, "VelkozR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Vi", {
+			{0, "ViQ", SpellDangerLevel::Medium, false},
+		}
+	},
+	{"Vladimir", {
+			{2, "VladimirE", SpellDangerLevel::Low, false},
+		}
+	},
+	{"Warwick", {
+			{3, "WarwickR", SpellDangerLevel::VeryHigh, true},
+		}
+	},
+	{"Xerath", {
+			{0, "XerathArcanopulseChargeUp", SpellDangerLevel::Medium, false},
+			{3, "XerathLocusOfPower2", SpellDangerLevel::High, true},
+		}
+	},	
+	{"Zac", {
+			{2, "ZacE", SpellDangerLevel::Medium, true}, 
+		}
+	},
+	{"Zilean", {
+			{52, "Zilean_Passive", SpellDangerLevel::Low, true}, //Not Sure About the name
+		}
+	},
+	{"All", {
+			{66, "SummonerTeleport", SpellDangerLevel::Low, true},
+			//{13, "", SpellDangerLevel::Low, true},
+		}
+	},
 };
 
 class GameObject {
@@ -92,10 +238,15 @@ public:
 	GameObject* GetEntity() {
 		return pSDK->EntityManager->GetObjectFromID(GetNetworkID());
 	}
-	GameObject* GetParentObject() {
+	GameObject* GetObjectOwner() {
 		unsigned int netID{0};
 		SdkGetObjectOwner(Object, &netID, NULL);
 		return pSDK->EntityManager->GetObjectFromID(netID);
+	}
+	GameObject* GetParticleOwner() {
+		void* obj{ NULL };
+		SdkGetParticleOwner(Object, &obj);
+		return pSDK->EntityManager->GetObjectFromPTR(obj);
 	}
 
 	AttackableUnit*	AsAttackableUnit() {
@@ -323,7 +474,7 @@ public:
 	MAKE_GET(AttackData, SDK_SPELL, SdkGetAIBasicAttack);
 	MAKE_GET(BaseAttackDamage, float, SdkGetAIBaseAttackDamage);
 	MAKE_GET(BonusAttackDamage, float, SdkGetAIBonusAttackDamage);
-	MAKE_GET(Direction, SDKVECTOR, SdkGetAIFacingDirection);
+	MAKE_GET(Direction, SDKVECTOR, SdkGetAIFacingDirection);	
 
 	bool IsFacing(Vector2& position) {
 		auto Pos{ position - GetPosition().To2D() };
@@ -346,7 +497,9 @@ public:
 	}
 
 	bool IsFacing(AIBaseClient* target) {
-		return IsFacing(&(target->GetPosition()));
+		auto position { target->GetPosition() };
+
+		return IsFacing(&position);
 	}
 
 	float GetFlatArmorPen() {
@@ -422,12 +575,11 @@ public:
 		return Spell;
 	}
 
-
-
-	AttackableUnit GetTarget() {
+	AttackableUnit* GetTarget() {
 		void* Target{ NULL };
-		CHECKFAIL(SdkGetAIEnemy(&Object, &Target, NULL));
-		return AttackableUnit(Target);
+		CHECKFAIL(SdkGetAIEnemy(Object, &Target, NULL));
+		auto tar{ pSDK->EntityManager->GetObjectFromPTR(Target) };
+		return (tar ? tar->AsAttackableUnit() : NULL);
 	}
 
 	SDK_ABILITY_RESOURCE GetAbilitySlots(unsigned char index) {
@@ -515,26 +667,7 @@ public:
 			}
 		}
 		return 66;
-	}
-
-	struct BuffInstance {
-		std::string Name;
-		unsigned char Type;
-		const char* TypeStr;
-		float StartTime;
-		float EndTime;
-		bool HasCount;
-		int Count;
-		PSDK_SPELL Spell;
-		void* Caster;
-		int Stacks;
-
-		bool IsValid() {
-			float time = 0.0f;
-			SdkGetGameTime(&time);
-			return Stacks > 0 && time < EndTime;
-		}
-	};
+	}	
 
 	std::vector<BuffInstance> GetBuffs() {		
 		std::vector<BuffInstance> output;
@@ -542,6 +675,8 @@ public:
 			[](unsigned char Type, float StartTime, float EndTime, const char* Name, void* Caster, unsigned int CasterID,
 				int Stacks, bool HasCount, int Count, PSDK_SPELL Spell, void* UserData)  -> bool 
 			{
+				UNREFERENCED_PARAMETER(CasterID);
+
 				if (!UserData) {
 					SdkUiConsoleWrite("[SDK Extensions] EnumBuffs Error");
 					return false;
@@ -571,136 +706,83 @@ public:
 			&output
 		);
 		return output;
-	};
+	};	
 
-	struct PerkInstance {
-		unsigned int ID;
-		const char* Name;
-	};
-	std::vector<PerkInstance> GetPerks() {
-		std::vector<PerkInstance> output;
-
-		SdkEnumHeroPerks(
-			Object,
-			[](unsigned int ID, const char* Name, void* UserData) {
-			if (!UserData) {
-				SdkUiConsoleWrite("[SDK] EnumPerks Error");
-				return false;
-			}
-			std::vector<PerkInstance>* Perks = (std::vector<PerkInstance>*)(UserData);
-			if (Perks) {
-				Perks->push_back(PerkInstance{ ID, Name });
-			}
-			return true;
-		},
-			&output);
-
-		return output;
+	bool HasBuff(std::string input, bool partialName = false) {
+		return pSDK->BuffManager->HasBuff(GetNetworkID(), input, partialName);
 	}
 
-	bool HasPerk(unsigned int ID) {
-		auto Perks{ GetPerks() };
-		for (auto &Perk : Perks) {
-			if (Perk.ID == ID) {
-				return true;
-			}
-		}
+	BuffInstance GetBuff(std::string input, bool partialName = false) {
+		return pSDK->BuffManager->GetBuff(GetNetworkID(), input, partialName);
 	}
 
-	bool HasPerk(const char* Name) {
-		auto Perks{ GetPerks() };
-		for (auto &Perk : Perks) {
-			if (strcmp(Perk.Name, Name) == 0) {
-				return true;
-			}
-		}
+	int GetBuffStacks(std::string input, bool partialName = false) {
+		return pSDK->BuffManager->GetBuffStacks(GetNetworkID(), input, partialName);
 	}
 
-	bool HasBuff(const char* input, bool partialName = true, bool toLower = false) {
-		auto buff = GetBuff(input, partialName, toLower);
-		return buff.StartTime != 0;
-	}
-
-	BuffInstance GetBuff(const char* input, bool partialName = true, bool toLower = false) {
-		auto Buffs{ GetBuffs() };
-		for (auto &Buff : Buffs) {
-			std::string buffname(Buff.Name);
-			if (toLower) {Common::ToLower(&buffname);}
-
-			if (strcmp(buffname.c_str(), input) == 0 || (partialName && strstr(buffname.c_str(), input))) {
-				return Buff;
-			}
-		}
-		return BuffInstance{};
-	}
-
-	int GetBuffStacks(const char* input, bool partialName = true, bool toLower = false) {
-		auto tmp{ GetBuff(input, partialName, toLower) };
-		return tmp.Stacks;
-	}
-
-	int GetBuffCount(const char* input, bool partialName = true, bool toLower = false) {
-		auto tmp{ GetBuff(input, partialName, toLower) };
-		return (tmp.HasCount) ? tmp.Count : 0;
+	int GetBuffCount(std::string input, bool partialName = false) {
+		return pSDK->BuffManager->GetBuffCount(GetNetworkID(), input, partialName);
 	}
 
 	bool HasBuffType(unsigned char buffType) {
-		auto buff{ GetBuffByType(buffType) };
-		return buff.StartTime != 0;
+		return pSDK->BuffManager->HasBuffType(GetNetworkID(), buffType);
 	}
 
 	BuffInstance GetBuffByType(unsigned char buffType) {
-		auto buffs{ GetBuffs() };
-		for (auto & buff : buffs) {
-			if (buff.Type == buffType)
-				return buff;
-		}
-		return BuffInstance{};
+		return pSDK->BuffManager->GetBuffByType(GetNetworkID(), buffType);
 	}
 
 	bool CanProcessAttack(float TimeLeft = 0.f) {
-		auto buffs{ GetBuffs() };
-		std::map<unsigned char, bool> buffTypes;
 		float CurrentTime;	SdkGetGameTime(&CurrentTime);
 
-		for (auto & buff : buffs) {
-			if (TimeLeft < 0.01f || buff.EndTime > CurrentTime + TimeLeft)
-				buffTypes[buff.Type] = true;
+		for (auto &[type, _] : cantProcessAttackBuffs) {
+			auto buff{ GetBuffByType(type) };
+			if (buff.IsValid() && buff.EndTime > (CurrentTime + TimeLeft)) {
+				return false;
+			}
 		}
-		if (buffTypes[BUFF_TYPE_STUN] || buffTypes[BUFF_TYPE_TAUNT] || buffTypes[BUFF_TYPE_POLYMORPH] || buffTypes[BUFF_TYPE_FEAR] || 
-			buffTypes[BUFF_TYPE_CHARM] || buffTypes[BUFF_TYPE_SUPPRESSION] || buffTypes[BUFF_TYPE_BLIND] || buffTypes[BUFF_TYPE_FLEE] || 
-			buffTypes[BUFF_TYPE_KNOCKUP] || buffTypes[BUFF_TYPE_KNOCKBACK] || buffTypes[BUFF_TYPE_DISARM] || buffTypes[BUFF_TYPE_ASLEEP]) {
-			return false;
-		}
+
 		return true;
 	}
 
 	bool CanProcessMove(float TimeLeft = 0.f) {
-		std::map<unsigned char, bool> buffTypes;
 		float CurrentTime;	CHECKFAIL(SdkGetGameTime(&CurrentTime));
 
-		for (auto& buff : GetBuffs()) {
-			if (TimeLeft < 0.01f || buff.EndTime > CurrentTime + TimeLeft)
-				buffTypes[buff.Type] = true;
+		for (auto &[type, _] : cantProcessMovementBuffs) {
+			auto buff{ GetBuffByType(type) };
+			if (buff.IsValid() && buff.EndTime > (CurrentTime + TimeLeft)) {
+				return false;
+			}
 		}
-		if (buffTypes[BUFF_TYPE_STUN] || buffTypes[BUFF_TYPE_TAUNT] || buffTypes[BUFF_TYPE_POLYMORPH] || buffTypes[BUFF_TYPE_SNARE] ||
-			buffTypes[BUFF_TYPE_FEAR] || buffTypes[BUFF_TYPE_CHARM] || buffTypes[BUFF_TYPE_SUPPRESSION] || buffTypes[BUFF_TYPE_FLEE] || 
-			buffTypes[BUFF_TYPE_KNOCKUP] || buffTypes[BUFF_TYPE_KNOCKBACK] || buffTypes[BUFF_TYPE_ASLEEP]) {
-			return false;
-		}
+
 		return true;
 	}
 
 	bool IsImmobile(float TimeLeft = 0.f) {
-		std::map<unsigned char, bool> buffTypes;
 		float CurrentTime;	CHECKFAIL(SdkGetGameTime(&CurrentTime));
 
-		for (auto & buff : GetBuffs()) {
-			if (TimeLeft < 0.01f || buff.EndTime > CurrentTime + TimeLeft)
-				buffTypes[buff.Type] = true;
+		for (auto &[type, _] : immobileBuffs) {
+			auto buff{ GetBuffByType(type) };
+			if (buff.IsValid() && buff.EndTime > (CurrentTime + TimeLeft)) {
+				return true;
+			}
 		}
-		return (buffTypes[BUFF_TYPE_STUN] || buffTypes[BUFF_TYPE_SNARE] || buffTypes[BUFF_TYPE_SUPPRESSION] || buffTypes[BUFF_TYPE_KNOCKUP] || buffTypes[BUFF_TYPE_ASLEEP]);
+
+		return false;
 	}
+
+	float ImmobileTimeLeft() {
+		float CurrentTime;	CHECKFAIL(SdkGetGameTime(&CurrentTime));
+		float bestTime{ 0.0f };
+
+		for (auto &[type, _] : immobileBuffs) {
+			auto buff{ GetBuffByType(type) };
+			if (buff.IsValid() && buff.EndTime > bestTime) {
+				bestTime = buff.EndTime;
+			}
+		}
+		return bestTime > EPSILON ? (bestTime - CurrentTime) : 0.0f;
+	}	
 
 	bool IsMelee() {
 		int tmp{}; CHECKFAIL(SdkGetAICombatType(Object, &tmp));
@@ -727,7 +809,7 @@ public:
 	~AIHeroClient() {};
 
 	int GetLevel() {
-		int Level = 0;
+		int Level = 1;
 		CHECKFAIL(SdkGetHeroExperience(Object, NULL, &Level));
 		return Level;
 	}
@@ -772,9 +854,22 @@ public:
 		return ItemList.find(ItemID) != ItemList.end();
 	}
 
+	std::vector<PerkInstance> GetPerks() {
+		return pSDK->BuffManager->GetPerks(this);
+	}
+
+	bool HasPerk(unsigned int ID) {
+		return pSDK->BuffManager->HasPerk(this, ID);
+	}
+
+	bool HasPerk(std::string Name) {
+		return pSDK->BuffManager->HasPerk(this, Name);
+	}
+
 	unsigned int CountEnemiesInRange(float f) {
 		unsigned int result{ 0 };
-		for (auto &[_, Enemy] : pSDK->EntityManager->GetEnemyHeroes(f, &(GetPosition()))) {
+		auto position { GetPosition() };
+		for (auto &[_, Enemy] : pSDK->EntityManager->GetEnemyHeroes(f, &position)) {
 			if (pCore->TS->IsValidTarget(Enemy)) {
 				++result;
 			}
@@ -785,7 +880,8 @@ public:
 
 	unsigned int CountAlliesInRange(float f) {
 		unsigned int result{ 0 };
-		for (auto &[_, Allyy] : pSDK->EntityManager->GetAllyHeroes(f, &(GetPosition()))) {
+		auto position { GetPosition() };
+		for (auto &[_, Allyy] : pSDK->EntityManager->GetAllyHeroes(f, &position)) {
 			if (pCore->TS->IsValidTarget(Allyy)) {
 				++result;
 			}
@@ -794,19 +890,41 @@ public:
 		return result;
 	}
 
+	float GetTrueAttackRange(AttackableUnit* Target = NULL) {
+		return pCore->Orbwalker->GetTrueAutoAttackRange(this, Target);
+	}
+
 	bool IsRecalling() {
 		return HasBuff("recall", false);
 	}
 
+	bool IsChannelingImportantSpell(float delay = 0.0f, bool bCheckInterruptedByMove = false) {
+		float CurrentTime;	CHECKFAIL(SdkGetGameTime(&CurrentTime));
+
+		std::string charName{ GetCharName() };
+		if (InterruptibleSpells.count(charName) > 0) {
+			auto activeSpell{ GetActiveSpell() };
+			if (activeSpell.Valid && (activeSpell.ChannelEndTime - CurrentTime) > delay) {
+				std::string spellName{ activeSpell.SpellCast.Spell.Name };
+				for (auto &spellData : InterruptibleSpells[charName]) {
+					if (spellName == spellData.Name && (!bCheckInterruptedByMove || spellData.MovementInterrupts)) {						
+						return true;
+					}
+				}
+			}			
+		}		
+		return false;
+	}
+
 	bool HasUndyingBuff(bool HealthCheck = false) {
-		static const std::map<std::string, std::function<bool()>> selfImmortalLambdas{
+		std::map<std::string, std::function<bool()>> selfImmortalLambdas{
 			{"Aatrox",     [&]() {return HasBuff("aatroxpassivedeath"); }},
 			{"Fiora" ,     [&]() {return HasBuff("FioraW"); }},
-			{"Tryndamere", [&]() {return HasBuff("UndyingRage") && (!HealthCheck || GetHealth().Current <= 30); }},
+			{"Tryndamere", [&]() {return HasBuff("UndyingRage") && (!HealthCheck || GetHealth().Current <= 70.0f); }},
 			{"Vladimir"  , [&]() {return HasBuff("VladimirSanguinePool"); }},
 		};
 
-		static const std::map<std::string, std::function<bool()>> allyImmortalLambdas{
+		std::map<std::string, std::function<bool()>> allyImmortalLambdas{
 			{"Kayle"  , [&]() {return  HasBuff("JudicatorIntervention"); }},
 			{"Kindred", [&]() {return  HasBuff("kindredrnodeathbuff") && (!HealthCheck || GetHealthPercent() <= 10.0f); }},
 			{"Zilean" , [&]() {return (HasBuff("ChronoShift") || HasBuff("chronorevive")) && (!HealthCheck || GetHealthPercent() <= 10.0f); }},			
@@ -827,7 +945,35 @@ public:
 		return false;
 	}
 
+	bool HasSpellShield()	{
+		if (HasBuffType(BUFF_TYPE_SPELL_SHIELD) || HasBuffType(BUFF_TYPE_SPELL_IMMUNE)) {
+			return true;
+		}		
+		return false;
+	}
+
 	MAKE_GET(NeutralKills, int, SdkGetHeroNeutralKills);
+
+	void DrawDamageOnHP(float dmg) {
+		static int constexpr barHeight  {11};
+		static int constexpr barWidth   {105};
+		static int constexpr barXOffset {-45};
+		static int constexpr barYOffset {-23};
+		static SDKCOLOR DmgColor { 110, 14, 76, 195 }; 
+
+		auto barPos{ GetHealthBarScreenPos() };
+		barPos.x += (float)barXOffset;
+		barPos.y += (float)barYOffset;
+
+		if (Renderer::ScreenToWorld(barPos).IsOnScreen()) {
+			auto h{ GetHealth() };
+			auto percentHealthAfterDamage{  (std::max<float>(0, 100.0f*(h.Current - dmg)/h.Max) ) };
+			Vector2 curHealthPos{ barPos.x + barWidth * (h.Current / h.Max), barPos.y };
+			Vector2 endPos{ barPos.x + percentHealthAfterDamage,  barPos.y };
+
+			Draw::LineScreen(&endPos, &curHealthPos, barHeight, &DmgColor);
+		}		
+	}
 };
 
 class AIMinionClient : public AIBaseClient {
@@ -909,6 +1055,11 @@ public:
 		SDKVECTOR endPos{};
 		CHECKFAIL(SdkGetMissileTarget(Object, &endPos, NULL, NULL));
 		return endPos;
+	}
+
+	bool IsOutsideOfTheMap() {
+		auto pos{ GetPosition() };
+		return pos.x < 0.0f || pos.x > 14700.0f || pos.z < 0.0f || pos.z > 14700.0f;
 	}
 
 	bool IsValid() {

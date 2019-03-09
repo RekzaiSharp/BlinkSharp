@@ -1,9 +1,12 @@
 #pragma once
 
-#include "d3dx9.h"
-#include "d3d9.h"
-#include <vector>
+#pragma warning(push, 0)
+#pragma warning(disable: 26495)
+#include <d3dx9.h>
+#include <d3d9.h>
 #include <Windows.h>
+#include <vector>
+#pragma warning(pop)
 
 class Vector3;
 class IntersectionResult;
@@ -37,6 +40,8 @@ public:
 		y = vec->z;
 	}
 	Vector2(float X, float Y, float Z) {
+		UNREFERENCED_PARAMETER(Y);
+
 		x = X;
 		y = Z;
 	}
@@ -151,6 +156,8 @@ public:
 	bool IsGrass(float height = 0.0f);
 	float GetTerrainHeight(float height = 0.0f);
 	bool IsBetween(Vector2& a, Vector2& c);
+	bool IsLeftOfLineSegment(Vector2& start, Vector2& end);
+	bool IsRightOfLineSegment(Vector2& start, Vector2& end);
 
 } SDKPOINT, *PSDKPOINT;
 
@@ -404,6 +411,82 @@ inline std::pair<float, Vector2> VectorMovementCollision(Vector2& startPoint1, V
 	return std::make_pair(t1, !isnan(t1) ? Vector2(sP1X + s * t1, sP1Y + k * t1) : Vector2());
 }
 
+//Delay actually works for spells
+inline std::pair<float, Vector2> VectorMovementCollisionEx(Vector2& _startPoint1, Vector2& endPoint1, float v1, Vector2& startPoint2, float v2, float delay = 0.0f) {
+	auto startPoint1{delay > EPSILON ? _startPoint1.Extended(endPoint1, v1 * delay) : _startPoint1};
+	float sP1X = startPoint1.x;
+	float sP1Y = startPoint1.y;
+	float eP1X = endPoint1.x;
+	float eP1Y = endPoint1.y;
+	float sP2X = startPoint2.x;
+	float sP2Y = startPoint2.y;
+
+	float d = eP1X - sP1X;
+	float e = eP1Y - sP1Y;
+	float dist = (float)std::sqrt(d * d + e * e), t1 = nanf("");
+
+	float s = std::abs(dist) > EPSILON ? v1 * d / dist : 0.0f;
+	float k = std::abs(dist) > EPSILON ? v1 * e / dist : 0.0f;
+
+	float r = sP2X - sP1X, j = sP2Y - sP1Y;
+	auto c = r * r + j * j;
+
+	if (dist > 0.0f) {
+		if (std::abs(v1 - HUGE_VALF) < EPSILON) {
+			auto t = dist / v1;
+			t1 = v2 * t >= 0.f ? t : nanf("");
+		}
+		else if (std::abs(v2 - HUGE_VALF) < EPSILON) {
+			t1 = 0.f;
+		}
+		else {
+			float a = s * s + k * k - v2 * v2, b = -r * s - j * k;
+
+			if (std::abs(a) < EPSILON) {
+				if (std::abs(b) < EPSILON) {
+					t1 = std::abs(c) < EPSILON ? 0.f : nanf("");
+				}
+				else {
+					auto t = -c / (2 * b);
+					t1 = v2 * t >= 0.f ? t : nanf("");
+				}
+			}
+			else {
+				auto sqr = b * b - a * c;
+
+				if (!(sqr >= 0)) {
+					return std::make_pair(t1, !isnan(t1) ? Vector2(sP1X + s * t1, sP1Y + k * t1) : Vector2());
+				}
+
+				auto nom = (float)std::sqrt(sqr);
+				auto t = (-nom - b) / a;
+
+				t1 = v2 * t >= 0.f ? t : nanf("");
+				t = (nom - b) / a;
+
+				auto t2 = v2 * t >= 0.f ? t : nanf("");
+
+				if (isnan(t2) || isnan(t1)) {
+					return std::make_pair(t1, !isnan(t1) ? Vector2(sP1X + s * t1, sP1Y + k * t1) : Vector2());
+				}
+
+				if (t1 >= 0.0f && t2 >= 0.0f) {
+					t1 = min(t1, t2);
+				}
+				else if (t2 >= 0.0f) {
+					t1 = t2;
+				}
+			}
+		}
+	}
+	else if (std::abs(dist) < EPSILON) {
+		t1 = 0.f;
+	}
+
+	return std::make_pair(t1, !isnan(t1) ? Vector2(sP1X + s * t1, sP1Y + k * t1) : Vector2());
+}
+
+
 inline std::vector<Vector2> CircleCircleIntersection(Vector2& center1, Vector2& center2, float radius1, float radius2) {
 	float d = center1.Distance(center2);
 	if (d > radius1 + radius2 || d <= std::abs(radius1 - radius2)) {
@@ -641,6 +724,9 @@ inline float CPAPointsEx(Vector2& p1, Vector2& v1, Vector2& p2, Vector2& v2, Vec
 }
 
 inline float CPAPointsEx(Vector2& p1, Vector2& v1, Vector2& p2, Vector2& v2, Vector2& p1end, Vector2& p2end, _Out_opt_ Vector2* p1out, _Out_opt_ Vector2* p2out) {
+	UNREFERENCED_PARAMETER(p1end);
+	UNREFERENCED_PARAMETER(p2end);
+
 	Track Tr1 {p1, v1};
 	Track Tr2 {p2, v2};
 
@@ -830,7 +916,8 @@ inline ProjectionInfo Vector2::ProjectOn(Vector2 & segmentStart, Vector2 & segme
 	auto ax = segmentStart.x;
 	auto ay = segmentStart.y;
 	auto bx = segmentEnd.x;
-	auto by = segmentEnd.y;
+	auto by = segmentEnd.y;	
+
 	auto rL = (((cx - ax) * (bx - ax)) + ((cy - ay) * (by - ay)))
 		/ ((float)std::pow(bx - ax, 2) + (float)std::pow(by - ay, 2));
 	auto pointLine = Vector2(ax + (rL * (bx - ax)), ay + (rL * (by - ay)));
@@ -845,7 +932,7 @@ inline ProjectionInfo Vector2::ProjectOn(Vector2 & segmentStart, Vector2 & segme
 		rS = rL;
 	}
 
-	auto isOnSegment = (rS - rL < EPSILON);
+	auto isOnSegment = (std::abs(rS - rL) < EPSILON);
 	auto pointSegment = isOnSegment ? pointLine : Vector2(ax + (rS * (bx - ax)), ay + (rS * (by - ay)));
 	return ProjectionInfo{ isOnSegment, pointSegment, pointLine };
 }
@@ -873,25 +960,42 @@ inline bool Vector2::IsOnScreen(float radius) {
 }
 
 inline bool Vector2::IsWall(float height) {
-	bool tmp;  SdkIsLocationWall(&(this->To3D(height)), &tmp);
-	return tmp;
+	bool bIsWall = false;
+	auto position { this->To3D(height) };
+	SdkIsLocationWall(&position, &bIsWall);
+
+	return bIsWall;
 }
 
-inline bool Vector2::IsGrass(float height){
-	int Flags{ 0 };
-	SdkGetCollisionFlags(&(this->To3D(height)), &Flags);
-	return (Flags & COLLISION_FLAG_GRASS);
+inline bool Vector2::IsGrass(float height)
+{
+	int flags = 0;
+	auto position { this->To3D(height) };
+	SdkGetCollisionFlags(&position, &flags);
+
+	return (flags & COLLISION_FLAG_GRASS);
 }
 
 inline float Vector2::GetTerrainHeight(float height) {
-	float h{ 0.0f };
-	bool valid{ false };
-	SdkGetTerrainHeight(&(this->To3D(height)), &h, &valid);
-	return valid ? h : 0.0f;
+	auto Position { this->To3D(height) };
+
+	float h = 0.0f;
+	bool valid = false;
+	SdkGetTerrainHeight(&Position, &h, &valid);
+
+	return ((valid) ? h : 0.0f);
 }
 
 inline bool Vector2::IsBetween(Vector2 & a, Vector2 & c) {
 	return a.Distance(c) + c.Distance(*this) - a.Distance(*this) < EPSILON;
+}
+
+inline bool Vector2::IsLeftOfLineSegment(Vector2 & start, Vector2 & end) {
+	return ((end.x - start.x) * (this->y - start.y) - (end.y - start.y) * (this->x - start.x)) > 0;
+}
+
+inline bool Vector2::IsRightOfLineSegment(Vector2 & start, Vector2 & end) {
+	return !this->IsLeftOfLineSegment(start, end);
 }
 
 inline float Vector2::Length() {
@@ -1000,7 +1104,7 @@ inline Vector3 Vector3::Extended(Vector3 & b, float distance) {
 }
 
 inline Vector3 Vector3::Extended(Vector2 & b, float distance) {
-	return *this + (distance * (b.To3D(this->z) - *this).Normalized());
+	return *this + (distance * (b.To3D(this->y) - *this).Normalized());
 }
 
 inline bool Vector3::IsValid() {

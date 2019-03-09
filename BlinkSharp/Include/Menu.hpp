@@ -1,11 +1,13 @@
 #pragma once
-#include <cctype>
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4365)
+#include <cctype>
+#include <map>
+#pragma warning(pop)
 
 #include "Vectors.hpp"
 #include "sdkapi.h"
-
-#include <map>
 
 extern void* g_LocalPlayer;
 extern PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
@@ -14,7 +16,7 @@ struct HotKey_t {
 	static unsigned int lastId;
 
 	const char * Name;	
-	unsigned int VirtualKey; 	
+	int VirtualKey; 	
 
 	bool Clicked;
 	bool Changed;
@@ -22,36 +24,36 @@ struct HotKey_t {
 	char buffer[16]; 
 	int  buffer_size;	
 
-	HotKey_t(const char* name, unsigned int virtualKey) {
+	HotKey_t(const char* name, int virtualKey) {
 		Id			= lastId++;
 		Name		= name;
 		VirtualKey	= virtualKey;		
-		buffer_size = 16;
+		buffer_size = sizeof(buffer);
 
 		Changed = false;
 		Clicked = false;
 
-		long ScanCode{ (long)MapVirtualKeyA(virtualKey, 0) };
+		long ScanCode{ (long)MapVirtualKeyA((UINT)virtualKey, 0) };
 		long lParam{ (ScanCode << 16) };
-		memset(buffer, 0, buffer_size);
+		memset(buffer, 0, (size_t)buffer_size);
 		GetKeyNameTextA(lParam, buffer, buffer_size);				
 	}
 };
 
 __declspec(selectany) std::map<unsigned int, bool> ExcludeOnWnd {
-	{13, true},		//RETURN
-	//{77, true},   //M
-	//{83, true},   //S
-	{123, true},	//F12
-	{132, true},	//F21
-	{258, true},	
-	{259, true}, 	
-	{274, true}, 	
-	{512, true}, 	
-	{522, true}, 	
-	{641, true}		
+	{13u, true},		//RETURN
+	//{77u, true},   //M
+	//{83u, true},   //S
+	{123u, true},	//F12
+	{132u, true},	//F21
+	{258u, true},	
+	{259u, true}, 	
+	{274u, true}, 	
+	{512u, true}, 	
+	{522u, true}, 	
+	{641u, true}		
 };
-__declspec(selectany) std::map<unsigned int, bool> clickedOnWnd = { {256, true}, {257, false}, {260, true}, {261, false} };
+__declspec(selectany) std::map<unsigned int, bool> clickedOnWnd = { {256u, true}, {257u, false}, {260u, true}, {261u, false} };
 
 class MakeMenu {
 	static bool hkInit;
@@ -134,9 +136,12 @@ public:
 	}
 
 	static void WndProc(bool KeyDown, unsigned int VirtualKey, unsigned short Repeated, unsigned char ScanCode, bool IsExtended, bool IsAltDown, bool PreviousState, bool TransitionState, void* UserData) {
+		UNREFERENCED_PARAMETER(UserData);
+		UNREFERENCED_PARAMETER(KeyDown);
+
 		if (ExcludeOnWnd.find(VirtualKey) == ExcludeOnWnd.end() && !requestKeyChange.empty()) {
 			if (VirtualKey != VK_ESCAPE) {
-				requestKeyChange.back()->VirtualKey = VirtualKey;
+				requestKeyChange.back()->VirtualKey = (int)VirtualKey;
 
 				long lParam{ Repeated | (ScanCode << 16) | (IsExtended << 24) | (IsAltDown << 29) | (PreviousState << 30) | (TransitionState << 31) };
 				GetKeyNameTextA(lParam, requestKeyChange.back()->buffer, requestKeyChange.back()->buffer_size);
@@ -183,11 +188,11 @@ public:
 	static void Hotkey(HotKey_t& KeyStruct) {	
 		std::string name(KeyStruct.Name);
 		name.erase(std::remove_if(name.begin(), name.end(), std::isspace), name.end());
-		SdkGetSettingString(name.c_str(), KeyStruct.buffer, KeyStruct.buffer_size, KeyStruct.buffer) ;
+		SdkGetSettingString(name.c_str(), KeyStruct.buffer, (size_t)KeyStruct.buffer_size, KeyStruct.buffer) ;
 
 		int tmpKey{}; name += "_VirtualKey";
-		SdkGetSettingNumber(name.c_str(), &tmpKey, KeyStruct.VirtualKey);		
-		KeyStruct.VirtualKey = (unsigned int)tmpKey;		
+		SdkGetSettingNumber(name.c_str(), &tmpKey, (int)KeyStruct.VirtualKey);		
+		KeyStruct.VirtualKey = tmpKey;		
 	}
 
 	static void DropList(const char * Name, int * Value, int Default) {
@@ -196,11 +201,11 @@ public:
 };
 
 typedef struct Hotkey_t{
-	unsigned int Key;
+	int Key;
 	bool Active;
 } Hotkey;
 typedef struct KeyToggle_t{
-	unsigned int Key;
+	int Key;
 	bool Toggle;
 } KeyToggle;
 class Menu {	
@@ -217,7 +222,7 @@ class Menu {
 	static std::map<std::string, bool>		InitializedVector;
 
 	struct Hotkey_t {
-		unsigned int VirtualKey;
+		int VirtualKey;
 
 		static unsigned int lastId;
 		bool Clicked;
@@ -225,11 +230,11 @@ class Menu {
 		unsigned int Id;
 		std::string Buffer;
 
-		Hotkey_t(unsigned int virtualKey = 0) : Id(lastId++), Changed(false), Clicked(false) {
+		Hotkey_t(int virtualKey = 0) : Id(lastId++), Changed(false), Clicked(false) {
 			VirtualKey = virtualKey;
 
 			static char lpszName[256];
-			long ScanCode{ (long)MapVirtualKeyA(virtualKey, 0) };
+			long ScanCode{ (long)MapVirtualKeyA((UINT)virtualKey, 0) };
 			if (GetKeyNameTextA(ScanCode << 16, lpszName, sizeof(lpszName))) {
 				Buffer = lpszName;
 			}
@@ -301,7 +306,7 @@ public:
 	}
 
 	template<> static Hotkey    Get<Hotkey>(std::string NameID) {
-		unsigned int key{ 0 };
+		int key{ 0 };
 		if (m_Hotkey.count(NameID) > 0) {
 			key = m_Hotkey[NameID].VirtualKey;
 		}
@@ -315,6 +320,53 @@ public:
 			return { toggle_struct.hotkey.VirtualKey, toggle_struct.Active };
 		}
 		return { 0, false };
+	}
+	#pragma endregion
+	
+	#pragma region Set Values
+	template <typename T> static void Set(std::string NameID, bool Value);
+	template <typename T> static void Set(std::string NameID, float Value);
+	template <typename T> static void Set(std::string NameID, int Value);
+	template <typename T> static void Set(std::string NameID, SDKVECTOR Value);
+	template <typename T> static void Set(std::string NameID, SDKCOLOR Value);
+
+	template<> static void Set<float>(std::string NameID, float Value)
+	{
+		if (m_Float.count(NameID) > 0)
+			m_Float[NameID] = Value;
+	}
+
+	template<>static void Set<int>(std::string NameID, int Value)
+	{
+		if (m_Int.count(NameID) > 0)
+			m_Int[NameID] = Value;
+	}
+
+	template<> static void Set<bool>(std::string NameID, bool Value)
+	{
+		if (m_Bool.count(NameID) > 0)
+			m_Bool[NameID] = Value;
+	}
+
+	template<> static void Set<SDKVECTOR>(std::string NameID, SDKVECTOR Value)
+	{
+		if (m_Vector.count(NameID) > 0)
+			m_Vector[NameID] = Value;
+	}
+
+	template<> static void Set<SDKCOLOR>(std::string NameID, SDKCOLOR Value)
+	{
+		if (m_Vector.count(NameID) > 0)
+			m_Vector[NameID] = {static_cast<float>(Value.R) / 255, static_cast<float>(Value.G) / 255, static_cast<float>(Value.B) / 255};
+	}
+
+	template<> static void Set<KeyToggle>(std::string NameID, bool Value)
+	{
+		if (m_KeyToggle.count(NameID) > 0)
+		{
+			m_KeyToggle[NameID].Active = Value;
+			m_KeyToggle[NameID].Changed = true;
+		}
 	}
 	#pragma endregion
 	
@@ -473,8 +525,12 @@ public:
 		bool changed = false;
 
 		std::vector<const char*> values;
-		for (const auto & item : Items){values.push_back(item.c_str());}
-		SdkUiCombo(DisplayName, &(m_Int[NameID]), values.data(), Items.size(), &changed);		
+		for (const auto& item : Items)
+		{
+			values.push_back(item.c_str());
+		}
+
+		SdkUiCombo(DisplayName, &(m_Int[NameID]), values.data(), (int)Items.size(), &changed);		
 
 		//Save
 		if (changed) {
@@ -490,10 +546,13 @@ public:
 	static size_t maxLength;
 
 	static void WndProc(bool KeyDown, unsigned int VirtualKey, unsigned short Repeated, unsigned char ScanCode, bool IsExtended, bool IsAltDown, bool PreviousState, bool TransitionState, void* UserData) {
+		UNREFERENCED_PARAMETER(UserData);
+		UNREFERENCED_PARAMETER(KeyDown);
+
 		if (ExcludeOnWnd.find(VirtualKey) == ExcludeOnWnd.end() && Game::IsAvailable()) {
 			if (VirtualKey != VK_ESCAPE) {
 				if (!requestKeyChange.empty()) {
-					requestKeyChange.back()->VirtualKey = VirtualKey;
+					requestKeyChange.back()->VirtualKey = (int)VirtualKey;
 
 					static char buffer[256];
 					long lParam{ Repeated | (ScanCode << 16) | (IsExtended << 24) | (IsAltDown << 29) | (PreviousState << 30) | (TransitionState << 31) };
@@ -509,7 +568,7 @@ public:
 
 				if (!PreviousState) {
 					for (auto &[_, val] : m_KeyToggle) {
-						if (VirtualKey == val.hotkey.VirtualKey) {
+						if (VirtualKey == (unsigned int)val.hotkey.VirtualKey) {
 							val.Active = !val.Active;
 							val.Changed = true;
 						}
@@ -530,7 +589,7 @@ public:
 	}
 	public:
 	#pragma region Hotkey
-	static void Hotkey(const char* DisplayName, std::string NameID, unsigned int Default) {
+	static void Hotkey(const char* DisplayName, std::string NameID, int Default) {
 		if (!hkInit) {
 			SdkRegisterOnKeyPress(WndProc, NULL);
 			hkInit = true;
@@ -545,8 +604,8 @@ public:
 			m_Hotkey[NameID].Buffer = Buffer;
 
 			int tmpKey{};
-			SdkGetSettingNumber((NameID + "_VirtualKey").c_str(), &tmpKey, m_Hotkey[NameID].VirtualKey);
-			m_Hotkey[NameID].VirtualKey = (tmpKey > 0 ? (unsigned int)tmpKey : 0);
+			SdkGetSettingNumber((NameID + "_VirtualKey").c_str(), &tmpKey, (int)m_Hotkey[NameID].VirtualKey);
+			m_Hotkey[NameID].VirtualKey = (tmpKey > 0 ? tmpKey : 0);
 
 			InitializedHotkey[NameID] = true;
 		}		
@@ -587,7 +646,7 @@ public:
 	#pragma endregion
 
 	#pragma region HotkeyToggle
-	static void HotkeyToggle(const char* DisplayName, std::string NameID, unsigned int Default, bool DefaultBool) {
+	static void HotkeyToggle(const char* DisplayName, std::string NameID, int Default, bool DefaultBool) {
 		if (!hkInit) {
 			SdkRegisterOnKeyPress(WndProc, NULL);
 			hkInit = true;
@@ -603,7 +662,7 @@ public:
 
 			int tmpKey{};
 			SdkGetSettingNumber((NameID + "_VirtualKey").c_str(), &tmpKey, m_KeyToggle[NameID].hotkey.VirtualKey);
-			m_KeyToggle[NameID].hotkey.VirtualKey = (tmpKey > 0 ? (unsigned int)tmpKey : 0);	
+			m_KeyToggle[NameID].hotkey.VirtualKey = (tmpKey > 0 ? tmpKey : 0);	
 
 			SdkGetSettingBool(NameID.c_str(), &(m_KeyToggle[NameID].Active), m_KeyToggle[NameID].Active);			
 
@@ -655,8 +714,8 @@ public:
 		va_list args;
 		va_start(args, format);
 		auto size = _vscprintf(format.c_str(), args);
-		std::string result(++size, 0);
-		vsnprintf_s(const_cast<char*>(result.c_str()), size, _TRUNCATE, format.c_str(), args);
+		std::string result((size_t)++size, 0);
+		vsnprintf_s(const_cast<char*>(result.c_str()), (size_t)size, _TRUNCATE, format.c_str(), args);
 		va_end(args);
 
 		SdkUiBulletText(result.c_str());
@@ -713,9 +772,9 @@ public:
 	static void Tree(const char* DisplayName, std::string NameID, bool expanded, const std::function<void()> function) {
 		if (m_Bool.count(NameID) == 0) {
 			function();
-		}			
-
-		m_Bool[NameID] = expanded;
+			m_Bool[NameID] = expanded;
+		}		
+		
 		SdkUiBeginTree(DisplayName, &m_Bool[NameID]);
 		if (m_Bool[NameID])	{
 			function();

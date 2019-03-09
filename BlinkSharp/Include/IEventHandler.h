@@ -1,7 +1,10 @@
 #pragma once
 
+#pragma warning(push, 0)
 #include <functional>
 #include <tuple>
+#pragma warning(pop)
+
 #include "Vectors.hpp"
 
 class AttackableUnit;
@@ -19,6 +22,9 @@ enum class CallbackEnum {
 	SpellCastEnd,
 	SpellCastStart,
 	Recall,
+	BuffCreateAndDelete,
+	BuffUpdate,
+	InventoryUpdate,
 
 	/// Extensions
 	Tick,

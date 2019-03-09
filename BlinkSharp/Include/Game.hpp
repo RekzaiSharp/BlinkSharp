@@ -1,14 +1,16 @@
 #pragma once
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4365)
 #include <vector>
+#include <map>
+#pragma warning(pop)
+
 #include "Vectors.hpp"
 #include "sdkapi.h"
 
 #include "Macros.hpp"
 #include "GameObjects.hpp"
-
-#include <map>
-
 
 #define TEAM_JUNGLE 300
 #define TEAM_ALLY Player.GetTeamID()
@@ -35,6 +37,8 @@ enum class SpellSlot {
 
 #define UGLYDIRTYMACRO(VAL) case(SpellSlot::##VAL): return #VAL;
 
+#pragma warning(push)
+#pragma warning(disable: 4062)
 inline std::string SlotToString(SpellSlot val) {
 	switch (val) {
 		UGLYDIRTYMACRO(Q);
@@ -54,6 +58,7 @@ inline std::string SlotToString(SpellSlot val) {
 	}
 	return "";
 }
+#pragma warning(pop)
 
 enum class SpellState {
 	Ready = SPELL_CAN_CAST_OK,
@@ -124,11 +129,11 @@ public:
 		return SDKSTATUS_SUCCESS(SdkPingMap(&pos, (unsigned char)type, playAudio));
 	}
 
-	static void PrintChat(std::string Text, int Flags = 0x40) {
+	static void PrintChat(std::string Text, unsigned int Flags = 0x40) {
 		SdkDisplayChatLocalPlayer(Text.c_str(), Flags);
 	}
 
-	static void PrintChat(const char* Text, int Flags = 0x40) {
+	static void PrintChat(const char* Text, unsigned int Flags = 0x40) {
 		SdkDisplayChatLocalPlayer(Text, Flags);
 	}
 

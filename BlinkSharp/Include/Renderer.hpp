@@ -6,8 +6,11 @@
 #include "Macros.hpp"
 #include "Common.hpp"
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4774)
 #include <string>
 #include <vector>
+#pragma warning(pop)
 
 typedef struct {
 	int Width;
@@ -91,7 +94,9 @@ public:
 	}
 
 	static void Circle(PSDKPOINT  Pos, float Radius, PSDKCOLOR Color = &Color::White, int Texture = 0, PSDKVECTOR Direction = &Vector3::DirectionVector){
-		SdkDrawCircle(&Pos->To3D(), Radius, Color, Texture, Direction);
+		auto position { Pos->To3D() };
+
+		SdkDrawCircle(&position, Radius, Color, Texture, Direction);
 	}
 
 	static void Cone(PSDKVECTOR Pos, float Length, float Angle, PSDKVECTOR Direction, PSDKCOLOR Color = &Color::White, int Texture = 0) {
@@ -111,7 +116,11 @@ public:
 		//auto screenPos1{ Renderer::WorldToScreen(*StartPos) };
 		//auto screenPos2{ Renderer::WorldToScreen(*EndPos) };
 		//SdkUiConsoleWrite("Drawing Line From {%f , %f} to {%f, %f}", screenPos1.x, screenPos1.y, screenPos2.x, screenPos2.y);
-		SdkDrawLine(&(StartPos->To3D()), &(EndPos->To3D()), Width, Color, Texture);
+
+		auto start { StartPos->To3D() };
+		auto end { EndPos->To3D() };
+
+		SdkDrawLine(&start, &end, Width, Color, Texture);
 	}
 	static void Text(PSDKVECTOR WorldPos, PSDKPOINT ScreenPos, const char* Text, const char* Face = "Arial Narrow", 
 		PSDKCOLOR Color = &Color::White, int Height = 20, int Width = 0, int Weight = 0, bool Italic = false) {
@@ -175,7 +184,7 @@ public:
 
 		for (size_t i = 0; i < Points.size(); i++) {
 			for (size_t j = i + 1; j < Points.size(); j++) {				
-				Line(&(Points[i]), &(Points[j]), 1, &Color::Red, 0);
+				Line(&(Points[i]), &(Points[j]), 1, Color, 0);
 			}
 		}
 	}

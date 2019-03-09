@@ -1,7 +1,10 @@
 #pragma once
 
 #include "GameObjects.hpp"
+
+#pragma warning(push, 0)
 #include <vector>
+#pragma warning(pop)
 
 class IHealthPred {
 public:

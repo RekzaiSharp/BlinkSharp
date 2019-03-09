@@ -49,6 +49,8 @@
 //use_deprecated: Enables temporary support for the obsolete functions
 //#define use_deprecated  
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4774)
 #include <vector>
 #include <list>
 #include <set>
@@ -58,6 +60,7 @@
 #include <ostream>
 #include <functional>
 #include <queue>
+#pragma warning(pop)
 
 namespace ClipperLib {
 
@@ -260,6 +263,8 @@ protected:
 };
 //------------------------------------------------------------------------------
 
+#pragma warning(push)
+#pragma warning(disable: 4435)
 class Clipper : public virtual ClipperBase
 {
 public:
@@ -356,6 +361,7 @@ private:
 #endif
 };
 //------------------------------------------------------------------------------
+#pragma warning(pop)
 
 class ClipperOffset 
 {

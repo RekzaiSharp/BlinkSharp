@@ -38,7 +38,13 @@
 *                                                                              *
 *******************************************************************************/
 
+#pragma warning(push)
+#pragma warning(disable: 4365 4435)
+
 #include "clipper.hpp"
+
+#pragma warning(push, 0)
+#pragma warning(disable: 4242 4244 4774)
 #include <cmath>
 #include <vector>
 #include <algorithm>
@@ -47,6 +53,7 @@
 #include <cstdlib>
 #include <ostream>
 #include <functional>
+#pragma warning(pop)
 
 namespace ClipperLib {
 
@@ -1738,6 +1745,8 @@ bool Clipper::IsEvenOddAltFillType(const TEdge& edge) const
 }
 //------------------------------------------------------------------------------
 
+#pragma warning(push)
+#pragma warning(disable: 4061)
 bool Clipper::IsContributing(const TEdge& edge) const
 {
   PolyFillType pft, pft2;
@@ -1836,6 +1845,8 @@ bool Clipper::IsContributing(const TEdge& edge) const
       return true;
   }
 }
+#pragma warning(pop)
+
 //------------------------------------------------------------------------------
 
 OutPt* Clipper::AddLocalMinPoly(TEdge *e1, TEdge *e2, const IntPoint &Pt)
@@ -2103,6 +2114,8 @@ void Clipper::SetZ(IntPoint& pt, TEdge& e1, TEdge& e2)
 //------------------------------------------------------------------------------
 #endif
 
+#pragma warning(push)
+#pragma warning(disable: 4061)
 void Clipper::IntersectEdges(TEdge *e1, TEdge *e2, IntPoint &Pt)
 {
   bool e1Contributing = ( e1->OutIdx >= 0 );
@@ -2296,6 +2309,7 @@ void Clipper::IntersectEdges(TEdge *e1, TEdge *e2, IntPoint &Pt)
       SwapSides( *e1, *e2 );
   }
 }
+#pragma warning(pop)
 //------------------------------------------------------------------------------
 
 void Clipper::SetHoleState(TEdge *e, OutRec *outrec)
@@ -2557,6 +2571,9 @@ TEdge *GetMaximaPairEx(TEdge *e)
 
 void Clipper::SwapPositionsInSEL(TEdge *Edge1, TEdge *Edge2)
 {
+	if (!Edge1 || !Edge2)
+		return;
+
   if(  !( Edge1->NextInSEL ) &&  !( Edge1->PrevInSEL ) ) return;
   if(  !( Edge2->NextInSEL ) &&  !( Edge2->PrevInSEL ) ) return;
 
@@ -3207,7 +3224,7 @@ void Clipper::BuildResult(Paths &polys)
     int cnt = PointCount(p);
     if (cnt < 2) continue;
     pg.reserve(cnt);
-    for (int i = 0; i < cnt; ++i)
+    for (int j = 0; j < cnt; ++j)
     {
       pg.push_back(p->Pt);
       p = p->Prev;
@@ -4627,3 +4644,5 @@ std::ostream& operator <<(std::ostream &s, const Paths &p)
 //------------------------------------------------------------------------------
 
 } //ClipperLib namespace
+
+#pragma warning(pop)

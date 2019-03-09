@@ -1,6 +1,10 @@
 #pragma once
 
+#pragma warning(push, 0)
+#pragma warning(disable: 4365)
 #include <map>
+#pragma warning(pop)
+
 #include "Vectors.hpp"
 
 class GameObject;

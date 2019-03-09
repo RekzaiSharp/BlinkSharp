@@ -1,101 +1,170 @@
 #include "Irelia.h"
-#include "Modes/Irelia_Combo.h"
-#include "Modes/Irelia_Clear.hpp"
+#include "../../Core/Misc/DamageLib.hpp"
+#include "Modes/Irelia.Combo.hpp"
+#include "Modes/Irelia.Clear.hpp"
+#include <stdbool.h>
 
 extern PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
 SDKCOLOR purple = { 255, 0, 255, 255 };
 SDKCOLOR scf = { 255, 123, 255, 255 };
 SDKVECTOR dir = { 0, 0, 1.f };
 
-AttackableUnit  Irelia::CurrentTarget;
+AIHeroClient*  Irelia::CurrentTarget;
 AttackableUnit* Irelia::OrbTarget;
 
 Spell::Targeted Irelia::Q(SpellSlot::Q, 600, DamageType::Physical);
 Spell::Active Irelia::W(SpellSlot::W, 825, DamageType::Physical);
-Spell::Skillshot Irelia::E(SpellSlot::E, 850, SkillshotType::Line);
-Spell::Skillshot Irelia::R(SpellSlot::R, 1000, SkillshotType::Cone);
+Spell::Skillshot Irelia::E(SpellSlot::E, 850.f, SkillshotType::Line, 0.25f, 2000.f, 60.f, DamageType::Physical, false, CollisionFlags::YasuoWall);
+Spell::Skillshot Irelia::R(SpellSlot::R, 1000.f, SkillshotType::Line, 0.25f, 2000.f, 200.f, DamageType::Magical, true, CollisionFlags::Heroes);
 
-void Irelia::Init() {
-	CurrentTarget = AttackableUnit();
+void Irelia::Init () {
+	CurrentTarget = nullptr;
 	OrbTarget = NULL;
-	Game::PrintChat(R"([RiftSharp] <font color="#00ffdc"><b>Irelia</b></font> Loaded.)");
+	Game::PrintChat(R"([RiftSharp] <font color="#00ffdc"><b>Divine Irelia Reborn</b></font> Loaded.)");
 	
 #pragma region RegisterCallbacks
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Tick, Tick);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Update);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Overlay, DrawMenu);
 	pSDK->EventHandler->RegisterCallback(CallbackEnum::Update, Draw);
-	SdkRegisterOnAIProcessSpell (OnProcessSpell, nullptr);
-	pSDK->EventHandler->RegisterCallback(CallbackEnum::CreateObject, OnCreate);
-	pSDK->EventHandler->RegisterCallback(CallbackEnum::DeleteObject, OnDelete);
-	pSDK->EventHandler->RegisterCallback(CallbackEnum::Dash, OnDelete);
 #pragma endregion
-/*
-#pragma region PredictionCallbacks
-	pSDK->EventHandler->RegisterCallback (CallbackEnum::Update, Prediction::PathingObserver::OnUpdate);
-	pSDK->EventHandler->RegisterCallback (CallbackEnum::NewPath, Prediction::PathingObserver::OnMove);
-	pSDK->EventHandler->RegisterCallback (CallbackEnum::Attack, Prediction::PathingObserver::OnAttack);
-#pragma endregion*/
 }
 
 void Irelia::Tick(void * UserData) {
-	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::Combo))
-		pIreliaCombo->Combo_Tick();
+	if (!Game::IsChatOpen () && !Game::IsOverlayOpen () && GetActiveWindow () == GetForegroundWindow ())
+	{
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo))
+			IreliaCombo::Tick ();
 
-	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear))
-		pIreliaClear->Clear_Tick();
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::LaneClear))
+			IreliaClear::LaneClear ();
 
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::JungleClear))
+			IreliaClear::JungleClear ();
+
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Mixed))
+			IreliaCombo::SmartTrade ();
+
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Flee))
+		{
+			auto wards = pSDK->EntityManager->GetEnemyMinions (600.f);
+			for (auto& ward : wards)
+				Game::PrintChat (ward.second->GetName());
+		}
+			
+	}
 }
 
-void Irelia::Update(void * UserData) {
-	if (pCore->Orbwalker->IsModeActive(OrbwalkingMode::LaneClear))
-		pIreliaClear->Draw_Clear();
+void Irelia::Update(void * UserData) 
+{
+	if (pIrelia->lastDelay != Menu::Get<int> ("combo.e.prediction"))
+	{
+		if (Menu::Get<int> ("combo.e.prediction") == 0)
+			E.Delay = 0.50f + float ((Game::Ping () / 1000) / 2);
+		if (Menu::Get<int> ("combo.e.prediction") == 1)
+			E.Delay = 0.25f + float ((Game::Ping () / 1000) / 2);
+
+		pIrelia->lastDelay = Menu::Get<int> ("combo.e.prediction");
+	}
+
+	if (Menu::Get<Hotkey> ("R-Key").Active && R.IsReady())
+	{
+		const auto target = pCore->TS->GetTarget (R.Range - 50.f);
+		if (target)
+		{
+			auto pred = R.GetPrediction (target);
+			if (pred->Hitchance >= HitChance::Medium && pred->CastPosition.IsValid ())
+				R.Cast (&pred->CastPosition);
+		}
+	}
+}
+
+auto Irelia::Flee() -> void
+{
+	/*const auto target = pCore->TS->GetTarget (850);
+
+	if (target)
+	{
+		if (Menu::Get<bool> ("FLEEQ") && Irelia::Q.IsReady())
+		{
+			auto minions = pSDK->EntityManager->GetEnemyMinions (600);
+			for (auto& minion : minions)
+			{
+				if (minion.second->GetHealth ().Current <= Pred->PhysicalDamage (minion.second, BladeSurge::GetDamage (true)) && minion.second->Distance (target) > Player.Distance (target))
+				{
+					pSDK->Control->CastSpell (0, minion.second);
+				}
+			}
+		}
+
+		if (Menu::Get<bool> ("FLEEE"))
+		{
+			if (Player.Distance (target) <= 850)
+			{
+				if (!pIrelia->active_blade.net_id && pIrelia->E.IsReady () && target)
+					pSDK->Control->CastSpell (2, &Player.GetPosition ());
+
+				if (pIrelia->active_blade.net_id && pIrelia->E.IsReady () && target)
+				{
+					auto castPos = Pred->IreliaPrediction (pIrelia->active_blade.position, target, 875.f, 0.25f, 2000.f);
+					if (castPos.IsValid ())
+						pSDK->Control->CastSpell (2, &castPos);
+				}
+			}
+		}
+	}*/
 }
 
 void Irelia::Draw(void * UserData) {
-	if (pIrelia->drw_q  && pIrelia->Q.IsReady())
+	if (Menu::Get<bool>("draw.q")  && pIrelia->Q.IsReady())
 		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(0).CastRange, &scf, 0, &dir);
 
-	if (pIrelia->drw_q_e && pIrelia->Q.IsReady())
+	if (Menu::Get<bool> ("draw.q.extended") && pIrelia->Q.IsReady())
 		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(0).CastRange * 2, &scf, 0, &dir);
 
-	if (pIrelia->draw_e && pIrelia->E.IsReady())
+	if (Menu::Get<bool> ("draw.e") && pIrelia->E.IsReady())
 		SdkDrawCircle(&Player.GetPosition(), Player.GetSpell(2).CastRange, &scf, 0, &dir);
 
-	if (pIrelia->msc_draw_blade && pIrelia->active_blade.net_id)
-		SdkDrawCircle(&pIrelia->active_blade.position, 10, &scf, 0, &dir);
+	if (Menu::Get<bool>("draw.minion.q"))
+	{
+		auto minions = pSDK->EntityManager->GetEnemyMinions (600);
+		for (auto& minion : minions)
+		{
+			if (minion.second->GetHealth().Current <= Pred->PhysicalDamage (minion.second, BladeSurge::GetDamage(true)) && minion.second->GetHealth().Current > 1)
+				SdkDrawCircle (&minion.second->GetPosition(), minion.second->GetBoundingRadius() + 15.f, &Color::White, 0, &dir);
+		}
+	}
+
+	if (Menu::Get<bool>("draw.hero.q"))
+	{
+		auto enemies = pSDK->EntityManager->GetEnemyHeroes (1000.f);
+		for (auto& enemy : enemies)
+		{
+			DamageLib::DrawDamage (enemy.second, Pred->PhysicalDamage (enemy.second, IreliaDamage::GetDamage()));
+		}
+	}
 }
 
-void Irelia::OnCreate(void* Object, unsigned int NetworkID, void* UserData)
+bool Irelia::OnCreate(void* Object, unsigned int NetworkID, void* UserData)
 {
 	auto blade = pSDK->EntityManager->GetObjectFromPTR(Object);
 
 	if (blade == nullptr)
-		return;
+		return true;
 	if (!blade->IsValid())
-		return;
+		return true;
 
-	const auto blade_name = Player.GetSkinID() > 0 ? "Irelia_Skin0" + std::to_string(Player.GetSkinID()) + "_E_Blades" : "Irelia_Base_E_Blades";
-	if (!Common::CompareLower(blade->GetName(), blade_name))
-		return;
+	if (std::string (blade->GetName ()).find ("_E_Blades") == std::string::npos)
+		return true;
 
 	if (pIrelia->active_blade.net_id == NULL)
 	{
 		pIrelia->active_blade.net_id = NetworkID;
+		pIrelia->active_blade.creationTime = GetTickCount ();
 		pIrelia->active_blade.position = blade->GetPosition();
 	}
-}
 
-void Irelia::OnProcessSpell(void* AI, PSDK_SPELL_CAST SpellCast, void* UserData)
-{
-	if (SpellCast->TargetObject == Player.PTR() && pIrelia->W.IsReady() && pIrelia->w_mode == 0)
-	{
-		if ( std::find(pIrelia->wSpells.begin(), pIrelia->wSpells.end(), SpellCast->Spell.ScriptName) != pIrelia->wSpells.end())
-		{
-			pSDK->Control->CastSpell (1, false);
-			
-		}
-	}
+	return true;
 }
 
 void Irelia::OnDelete(void* Object, unsigned int NetworkID, void* UserData)
@@ -103,85 +172,105 @@ void Irelia::OnDelete(void* Object, unsigned int NetworkID, void* UserData)
 	if (NetworkID == pIrelia->active_blade.net_id)
 	{
 		pIrelia->active_blade.net_id = NULL;
+		pIrelia->active_blade.creationTime = NULL;
 		pIrelia->active_blade.position = Vector3(0, 0, 0);
 	}
 }
 
-void Irelia::OnDash(AIHeroClient* Source, PSDKVECTOR StartPos, PSDKVECTOR EndPos, unsigned StartTick, unsigned Duration,
-	float Speed)
-{
-	if (Source->PTR() == Player.PTR())
-	{
-		pIrelia->inDash = true;
-		pSDK->EventHandler->DelayedAction([&] {pIrelia->inDash = false; }, Duration);
-	}
-}
 
-void Irelia::DrawMenu(void * UserData) {
-	bool visible(true); bool collapsed(true);
-	SdkUiBeginWindow("[RiftSharp] Irelia", &visible, &collapsed);
+void Irelia::DrawMenu (void * UserData) {
+
+	bool visible (true); bool collapsed (true);
+	SdkUiBeginWindow ("[RiftSharp] Divine Irelia", &visible, &collapsed);
 	if (collapsed && visible)
 	{
-		bool qs_open(false);
-		SdkUiBeginTree("Combo Settings", &qs_open);
-		if (qs_open)
+		bool q_open (true);
+		SdkUiBeginTree ("[Q] - Bladesurge", &q_open);
+		if (q_open)
 		{
-			SdkUiCheckbox("Use Q", &pIrelia->combo_q, nullptr);
-			static const char* q_modes[] = { "Always", "Marked", "Smart" };
-			SdkUiCombo("Q Mode", &pIrelia->q_mode, q_modes, RTL_NUMBER_OF(q_modes), nullptr);
-			SdkUiCheckbox("Use W", &pIrelia->combo_w, nullptr);
-			static const char* w_modes[] = { "Defensive", "Offensive"};
-			SdkUiCombo("W Mode", &pIrelia->w_mode, w_modes, RTL_NUMBER_OF(w_modes), nullptr);
-			SdkUiCheckbox("Use E", &pIrelia->combo_e, nullptr);
-			static const char* e_modes[] = { "Auto", "Manual" };
-			SdkUiCombo("First E", &pIrelia->e_mode, e_modes, RTL_NUMBER_OF(e_modes), nullptr);
-			SdkUiCheckbox("Use R", &pIrelia->combo_r, nullptr);
-			static const char* r_modes[] = { "Fast", "Default"};
-			SdkUiCombo("R Mode", &pIrelia->r_mode, r_modes, RTL_NUMBER_OF(r_modes), nullptr);
-			SdkUiEndTree();
+			Menu::Checkbox ("Use Q", "combo.q", true);
+			Menu::DropList ("Q Mode", "combo.q.mode", std::vector<std::string> ({ "Smart", "Marked" }));
+			Menu::Checkbox ("Q Killsteal", "combo.q.ks", true);
+			Menu::Checkbox ("Use Q to Clear", "clear.q", true);
+			Menu::Checkbox ("Stack before Engage", "combo.q.stack", true);
+			Menu::Checkbox ("Dont Q under Turrets", "combo.q.turret", true);
+			Menu::Checkbox ("Q Every Mark", "combo.q.spam", true);
+			Menu::SliderFloat ("Mana % Clear", "clear.q.mana", 20.f, 1.f, 100.f, "%.0f");
+			SdkUiEndTree ();
 		}
 
-		bool es_open(false);
-		SdkUiBeginTree("Clear Settings", &qs_open);
-		if (qs_open)
-		{
-			SdkUiCheckbox("Use Q", &pIrelia->clear_q, nullptr);
-			SdkUiDragFloat("Mana %", &pIrelia->clear_qmana, 0, 100, "%.0f", nullptr);
-			SdkUiEndTree();
+		bool w_open (true);
+		SdkUiBeginTree ("[W] - Defiant Dance", &w_open);
+		if (w_open)
+		{			
+			Menu::Checkbox ("Use W", "combo.w", true);
+			Menu::DropList ("W Mode", "combo.w.mode", std::vector<std::string> ({ "Offensive", "Manual" }));
+			SdkUiEndTree ();
 		}
 
-		bool ms_open(false);
-		SdkUiBeginTree("Misc Settings", &qs_open);
-		if (qs_open)
+		bool e_open (true);
+		SdkUiBeginTree ("[E] - Flawless Duet", &e_open);
+		if (e_open)
 		{
-			SdkUiCheckbox("Stack before Engage", &pIrelia->msc_stack, nullptr);
-			SdkUiCheckbox("Dont dive Turrets", &pIrelia->msc_turrets, nullptr);
-			SdkUiCheckbox("Draw Clear Path", &pIrelia->msc_draw_clear, nullptr);
-			SdkUiEndTree();
+			Menu::Checkbox ("Use E", "combo.e", true);
+			Menu::DropList ("Prediction", "combo.e.prediction", std::vector<std::string> ({ "Reborn", "Divine (old)" }), 1);
+
+			if (Menu::Get<int>("combo.e.prediction") == 0)
+			{
+				Menu::DropList ("Min. Hitchance", "combo.e.hitchance", std::vector<std::string> ({ "Medium", "High", "Very High" }), 0);
+				Menu::Checkbox ("Hit Multiple (Experimental)", "combo.e.multi", false);
+			}
+			else
+			{
+				Menu::DropList ("First E", "combo.e.first", std::vector<std::string> ({ "Mouse", "Under Player", "Manual" }), 1);
+				Menu::DropList ("Mode", "combo.e.mode", std::vector<std::string> ({ "Fast", "Precise"}), 1);
+			}
+
+			SdkUiEndTree ();
 		}
 
-		bool rs_open(false);
-		SdkUiBeginTree("Drawings", &qs_open);
-		if (qs_open)
+		bool r_open (true);
+		SdkUiBeginTree ("[R] - Vanguard's Edge", &r_open);
+		if (r_open)
 		{
-			SdkUiCheckbox("Draw Q", &pIrelia->drw_q, nullptr);
-			SdkUiCheckbox("Draw Extended Q", &pIrelia->drw_q_e, nullptr);
-         SdkUiCheckbox("Draw E", &pIrelia->draw_e, nullptr);
-			SdkUiCheckbox("Draw Blades", &pIrelia->msc_draw_blade, nullptr);
-			SdkUiEndTree();
+			Menu::Checkbox ("Auto R", "combo.r", true);
+			Menu::SliderInt ("Min. Enemies", "combo.r.amount", 2, 1, 5);
+			Menu::Checkbox ("Killable with Combo", "combo.r.killable", true);
+			Menu::Hotkey ("Assisted R Key", "R-Key", 84);
+			SdkUiEndTree ();
 		}
+
+		//bool f_open (true);
+		//SdkUiBeginTree ("[Misc] - Flee", &f_open);
+		//if (f_open)
+		//{
+		//	Menu::Checkbox ("Use Q", "FLEEQ", true);
+		//	Menu::SliderFloat ("HP % Panic", "flee.q.panic", 20.f, 1.f, 100.f, "%.0f");
+		//	Menu::Checkbox ("Use E", "FLEEE", true);
+		//	SdkUiEndTree ();
+		//}
+
+		//bool t_open (true);
+		//SdkUiBeginTree ("[Misc] - Harass (Mixed)", &t_open);
+		//if (t_open)
+		//{
+		//	Menu::SliderFloat ("HP Threshold %", "harass.q.threshold", 20.f, 1.f, 100.f, "%.0f");
+		//	SdkUiEndTree ();
+		//}
+
+		bool d_open (true);
+		SdkUiBeginTree ("[Misc] - Drawings", &d_open);
+		if (d_open)
+		{
+			Menu::Checkbox ("Draw Q", "draw.q", true);
+			Menu::Checkbox ("Draw Gapcloser Q", "draw.q.extended", true);
+			Menu::Checkbox ("Draw E", "draw.e", true);
+			Menu::Checkbox ("Draw Q Minions", "draw.minion.q", true);
+			Menu::Checkbox ("Draw Damage", "draw.hero.q", true);
+			SdkUiEndTree ();
+		}
+		SdkUiEndWindow ();
 	}
-	SdkUiEndWindow();
 }
 
-auto Irelia::QDamage(bool minion) -> float
-{
-	auto level = Player.GetSpell(0).Level;
-	std::vector<float> damage = { 0.f, 5.f, 25.f, 45.f, 65.f, 85.f };
-	std::vector<float> minion_damage{ 0.f, 45.f, 60.f, 75.f, 90.f, 105.f };
-	if (minion)
-		return damage[level] + (Player.GetAttackDamage() * 0.6) + minion_damage[level];
-	return damage[level] + (Player.GetAttackDamage() * 0.6);
-}
-
-std::unique_ptr<Irelia> pIrelia = std::make_unique<Irelia>();
+std::unique_ptr<Irelia> pIrelia = std::make_unique<Irelia> ();

@@ -35,6 +35,10 @@ struct StaticAttackDamage {
 	float CalculatedPhysical;
 	float CalculatedMagical;
 	float CalculatedTrue;	
+
+	bool MagicalDmg;
+	bool PhysicalDmg;
+	bool TrueDmg;
 };
 
 class IDamageLib {
@@ -42,7 +46,7 @@ public:
 	virtual float CalculateMagicalDamage (AIBaseClient * Source, AIBaseClient * Target, float Amount) = 0;
 	virtual float CalculatePhysicalDamage(AIBaseClient * Source, AIBaseClient * Target, float Amount) = 0;
 
-	virtual float GetSpellDamage(AIBaseClient* Source, AIBaseClient* Target, unsigned char Slot, SkillStage Stage) = 0;
+	virtual float GetSpellDamage(AIHeroClient* Source, AIBaseClient* Target, unsigned char Slot, SkillStage Stage) = 0;
 	virtual StaticAttackDamage GetStaticAutoAttackDamage(AIHeroClient* Source, bool MinionTarget) = 0;
 
 	virtual float GetAutoAttackDamage(AIBaseClient* Source, AIBaseClient* Target, StaticAttackDamage* StaticDmg = NULL, bool CheckPassives = false) = 0;

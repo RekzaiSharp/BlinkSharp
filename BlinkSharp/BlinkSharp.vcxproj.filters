@@ -27,16 +27,16 @@
     <ClCompile Include="Champions\Irelia\Irelia.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Champions\Irelia\Modes\Irelia_Combo.cpp">
+    <ClCompile Include="Core\Core.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Champions\Karthus\Karthus.cpp">
+    <ClCompile Include="Champions\Kassadin\Kassadin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Champions\Soraka\Soraka.cpp">
+    <ClCompile Include="Champions\Debug\Ezreal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Champions\Irelia\Modes\Irelia_Clear.cpp">
+    <ClCompile Include="Utility\SharpChat\SharpChat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,16 +119,52 @@
     <ClInclude Include="Champions\Irelia\Irelia.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Champions\Irelia\Modes\Irelia_Combo.h">
+    <ClInclude Include="Core\Core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Champions\Karthus\Karthus.h">
+    <ClInclude Include="Include\IBuffManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Champions\Soraka\Soraka.h">
+    <ClInclude Include="Include\ICollision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Champions\Irelia\Modes\Irelia_Clear.hpp">
+    <ClInclude Include="Include\Template.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\DamageLib.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Kassadin\Kassadin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DashDatabase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Debug\Ezreal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Data\Irelia.Spells.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Modes\Irelia.Combo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Irelia\Modes\Irelia.Clear.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Champions\Kassadin\Data\Kassadin.Spells.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Misc\Utility.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\SharpChat\SharpChat.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\SharpChat\Modes\ChatMode.Hostile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\SharpChat\Modes\ChatMode.Friendly.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

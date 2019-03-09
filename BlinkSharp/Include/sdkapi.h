@@ -259,7 +259,7 @@ typedef int SDKSTATUS;
 // Used by spell related API: SdkGetAISpell, SdkCastSpellLocalPlayer,
 // SdkLevelSpellLocalPlayer, and SdkCanAICastSpell.
 //
-#define SPELL_SLOT_MAX								65
+#define SPELL_SLOT_MAX								64
 #define SPELL_SLOT_START							0
 //////////////////////////////////////////////////////////////////////////
 
@@ -618,6 +618,48 @@ typedef int SDKSTATUS;
 
 //////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////
+//
+// Callback types.
+//
+
+//
+// Used by SdkRegisterCallback.
+//
+#define CALLBACK_TYPE_OVERLAY_SCENE					1
+#define CALLBACK_TYPE_GAME_SCENE					2
+#define CALLBACK_TYPE_OBJECT_CREATE					3
+#define CALLBACK_TYPE_OBJECT_DELETE					4
+#define CALLBACK_TYPE_AI_MOVE						5
+#define CALLBACK_TYPE_AI_ATTACK						6
+#define CALLBACK_TYPE_AI_CAST_ATTACK				7
+#define CALLBACK_TYPE_LIBRARY						8
+#define CALLBACK_TYPE_LOAD							9
+#define CALLBACK_TYPE_UNIT_RECALL					10
+#define CALLBACK_TYPE_OBJECT_UPDATE					11
+#define CALLBACK_TYPE_KEY_PRESS						12
+#define CALLBACK_TYPE_AI_PROCESS_SPELL				13
+#define CALLBACK_TYPE_AI_BUFF_CREATE_DELETE			14
+#define CALLBACK_TYPE_PLAYER_SHOP					15
+#define CALLBACK_TYPE_AI_BUFF_UPDATE				16
+
+#define CALLBACK_POSITION_FRONT						-1
+#define CALLBACK_POSITION_BACK						-2
+
+//////////////////////////////////////////////////////////////////////////
+//
+// Shop events.
+//
+
+//
+// The `Event` contained in ONPLAYERSHOPCALLBACK.
+//
+#define SHOP_EVENT_BUY_ITEM							1
+#define SHOP_EVENT_SELL_ITEM						2
+#define SHOP_EVENT_SWAP_ITEM						3
+#define SHOP_EVENT_UNDO_ACTION						4
+
+//////////////////////////////////////////////////////////////////////////
 ///
 /// Enums.
 ///
@@ -1019,6 +1061,21 @@ typedef bool (__cdecl* LIBRARYCALLBACK)(const char* ImportName, unsigned int Ver
 typedef bool (__cdecl* HEROPERKSCALLBACK)(unsigned int ID, const char* Name, void* UserData);
 
 //
+// Used by SdkRegisterOnBuffCreateDelete.
+//
+typedef void (__cdecl* ONAIBUFFCREATEDELETECALLBACK)(void* AI, bool Created, unsigned char Type, float StartTime, float EndTime, const char* Name, void* CasterObject, unsigned int CasterID, int Stacks, bool HasCount, int Count, PSDK_SPELL Spell, void* UserData);
+
+//
+// Used by SdkRegisterOnBuffUpdate.
+//
+typedef void (__cdecl* ONAIBUFFUPDATECALLBACK)(void* AI, unsigned char Type, float StartTime, float EndTime, const char* Name, void* CasterObject, unsigned int CasterID, int Stacks, bool HasCount, int Count, PSDK_SPELL Spell, void* UserData);
+
+//
+// Used by SdkRegisterOnShopLocalPlayer.
+//
+typedef void (__cdecl* ONPLAYERSHOPCALLBACK)(int Event, int Slot, int Extra, void* UserData);
+
+//
 // Used by SdkRegisterOnKeyPress.
 //
 //
@@ -1315,6 +1372,14 @@ typedef SDKSTATUS (__cdecl* SdkGetTerrainHeight_t)(PSDKVECTOR WorldCoordinates, 
 typedef SDKSTATUS (__cdecl* SdkGetCollisionFlags_t)(PSDKVECTOR WorldCoordinates, int* CollisionFlags);
 typedef SDKSTATUS (__cdecl* SdkCreateAIPath_t)(void* AI, PSDKVECTOR DesiredEndPosition, bool SmoothPath, PSDKVECTOR StartWorldPosition, PSDKVECTOR EndWorldPosition, size_t* NumberOfWaypoints, PSDKVECTOR* Waypoints);
 typedef SDKSTATUS (__cdecl* SdkGetAIServerPosition_t)(void* AI, PSDKVECTOR Position);
+typedef SDKSTATUS (__cdecl* SdkShowMasteryEmoteLocalPlayer_t)();
+typedef SDKSTATUS (__cdecl* SdkRegisterCallback_t)(void* Callback, void* UserData, int Type, int Position);
+typedef SDKSTATUS (__cdecl* SdkIsObjectParticle_t)(void* Object);
+typedef SDKSTATUS (__cdecl* SdkGetParticleOwner_t)(void* Particle, void** Object);
+typedef SDKSTATUS (__cdecl* SdkRegisterOnBuffCreateDelete_t)(ONAIBUFFCREATEDELETECALLBACK Callback, void* UserData);
+typedef SDKSTATUS (__cdecl* SdkRegisterOnShopLocalPlayer_t)(ONPLAYERSHOPCALLBACK Callback, void* UserData);
+typedef SDKSTATUS (__cdecl* SdkUseObjectLocalPlayer_t)(void* Unit, bool* Used);
+typedef SDKSTATUS (__cdecl* SdkRegisterOnBuffUpdate_t)(ONAIBUFFUPDATECALLBACK Callback, void* UserData);
 
 //
 // The SDK context structure, which contains a reference to the 
@@ -1546,6 +1611,14 @@ typedef struct _SDK_CONTEXT
 	SdkGetCollisionFlags_t _SdkGetCollisionFlags;
 	SdkCreateAIPath_t _SdkCreateAIPath;
 	SdkGetAIServerPosition_t _SdkGetAIServerPosition;
+	SdkShowMasteryEmoteLocalPlayer_t _SdkShowMasteryEmoteLocalPlayer;
+	SdkRegisterCallback_t _SdkRegisterCallback;
+	SdkIsObjectParticle_t _SdkIsObjectParticle;
+	SdkGetParticleOwner_t _SdkGetParticleOwner;
+	SdkRegisterOnBuffCreateDelete_t _SdkRegisterOnBuffCreateDelete;
+	SdkRegisterOnShopLocalPlayer_t _SdkRegisterOnShopLocalPlayer;
+	SdkUseObjectLocalPlayer_t _SdkUseObjectLocalPlayer;
+	SdkRegisterOnBuffUpdate_t _SdkRegisterOnBuffUpdate;
 } SDK_CONTEXT, *PSDK_CONTEXT;
 
 //
@@ -5808,7 +5881,7 @@ typedef struct _SDK_CONTEXT
 //		object that is created in the world for this frame. 
 //
 //		WARNING: It is possible for you to receive incomplete data if
-//			your plugin is loaded after the start of the game.
+//		your plugin is loaded after the start of the game.
 //
 // Arguments:
 //
@@ -5839,7 +5912,7 @@ typedef struct _SDK_CONTEXT
 //		next frame.
 //
 //		WARNING: It is possible for you to receive incomplete data if
-//			your plugin is loaded after the start of the game.
+//		your plugin is loaded after the start of the game.
 //
 // Arguments:
 //
@@ -7804,3 +7877,229 @@ typedef struct _SDK_CONTEXT
 //
 //--
 #define SdkGetAIServerPosition(AI, Position) SDK_CONTEXT_GLOBAL->_SdkGetAIServerPosition(AI, Position)
+
+//++
+//
+// SDKSTATUS
+// SdkShowMasteryEmoteLocalPlayer(
+//		void
+// )
+//
+// Routine Description:
+//
+//		This function causes the local player to perform their mastery 
+//		badge emote.
+//
+// Arguments:
+//
+//		None.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkShowMasteryEmoteLocalPlayer() SDK_CONTEXT_GLOBAL->_SdkShowMasteryEmoteLocalPlayer()
+
+//++
+//
+// SDKSTATUS
+// SdkRegisterCallback(
+//		_In_ void* Callback,
+//		_In_opt_ void* UserData,
+//		_In_ int Type,
+//		_In_ int Position
+// )
+//
+// Routine Description:
+//
+//		This function invokes your user-defined callback for your desired
+//		callback type.
+//
+//		WARNING: It is highly recommended to use the non-generic version 
+//		of this API to register your callback as it provides better
+//		type safety (calling conventions are explicit). This means that
+//		instead of registering a game scene callback with this function
+//		and the type CALLBACK_TYPE_GAME_SCENE, you should use
+//		SdkRegisterGameScene instead.
+//
+// Arguments:
+//
+//		Callback - The user-defined callback.
+//
+//		UserData - A pointer to an arbitrary data structure, provided
+//			by the user, that is passed to the callback function.
+//
+//		Type - A CALLBACK_TYPE_### value.
+//
+//		Position - A CALLBACK_POSITION_### value. Insertion to the 
+//			front of this plugin's processing queue can be done 
+//			with CALLBACK_POSITION_FRONT. By default, insertion is
+//			at the end of the plugin's processing queue
+//			(CALLBACK_POSITION_BACK).
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkRegisterCallback(Callback, UserData, Type, Position) SDK_CONTEXT_GLOBAL->_SdkRegisterCallback(Callback, UserData, Type, Position)
+
+//++
+//
+// SDKSTATUS
+// SdkIsObjectParticle(
+//		_In_ void* Object
+// )
+//
+// Routine Description:
+//
+//		This function returns SDKSTATUS_SUCCESS if the input game
+//		object is also a particle. Otherwise, this function returns
+//		SDKSTATUS_OBJECT_TYPE_MISMATCH.
+//
+// Arguments:
+//
+//		Object - The game object.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkIsObjectParticle(Object) SDK_CONTEXT_GLOBAL->_SdkIsObjectParticle(Object)
+
+//++
+//
+// SDKSTATUS
+// SdkGetParticleOwner(
+//		_In_ void* Particle,
+//		_Out_ void** Object
+// )
+//
+// Routine Description:
+//
+//		This function retrieves the owning game object of a spawned
+//		particle, if one exists.
+//
+// Arguments:
+//
+//		Particle - The particle object.
+//
+//		Object - Stores a reference to the owning object on success.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkGetParticleOwner(Particle, Object) SDK_CONTEXT_GLOBAL->_SdkGetParticleOwner(Particle, Object)
+
+//++
+//
+// SDKSTATUS
+// SdkRegisterOnBuffCreateDelete(
+//		_In_ ONAIBUFFCREATEDELETECALLBACK Callback,
+//		_In_opt_ void* UserData
+// )
+//
+// Routine Description:
+//
+//		This function registers a callback that is invoked each time 
+//		a buff is created or destroyed within the game.
+//
+// Arguments:
+//
+//		Callback - The user-defined callback.
+//
+//		UserData - A pointer to an arbitrary data structure, provided
+//			by the user, that is passed to the callback function.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkRegisterOnBuffCreateDelete(Callback, UserData) SDK_CONTEXT_GLOBAL->_SdkRegisterOnBuffCreateDelete(Callback, UserData)
+
+//++
+//
+// SDKSTATUS
+// SdkRegisterOnShopLocalPlayer(
+//		_In_ ONPLAYERSHOPCALLBACK Callback,
+//		_In_opt_ void* UserData
+// )
+//
+// Routine Description:
+//
+//		This function registers a callback that is invoked each time 
+//		the local player buys, sells, or undoes an item purchase. 
+//		Additionally, this callback runs when the player moves items
+//		within the inventory to different slots.
+//
+// Arguments:
+//
+//		Callback - The user-defined callback.
+//
+//		UserData - A pointer to an arbitrary data structure, provided
+//			by the user, that is passed to the callback function.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkRegisterOnShopLocalPlayer(Callback, UserData) SDK_CONTEXT_GLOBAL->_SdkRegisterOnShopLocalPlayer(Callback, UserData)
+
+//++
+//
+// SDKSTATUS
+// SdkUseObjectLocalPlayer(
+//		_In_ void* Unit,
+//		_Out_opt_ bool* Used
+// )
+//
+// Routine Description:
+//
+//		This function causes the local player to capture/use/activate
+//		an object in the world.
+//
+// Arguments:
+//
+//		Unit - The attackable unit.
+//
+//		Used - Stores whether or not the object was used on success.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkUseObjectLocalPlayer(Unit, Used) SDK_CONTEXT_GLOBAL->_SdkUseObjectLocalPlayer(Unit, Used)
+
+//++
+//
+// SDKSTATUS
+// SdkRegisterOnBuffUpdate(
+//		_In_ ONAIBUFFUPDATECALLBACK Callback,
+//		_In_opt_ void* UserData
+// )
+//
+// Routine Description:
+//
+//		This function registers a callback that is invoked each time 
+//		a buff is updated within the game.
+//
+// Arguments:
+//
+//		Callback - The user-defined callback.
+//
+//		UserData - A pointer to an arbitrary data structure, provided
+//			by the user, that is passed to the callback function.
+//
+// Return Value:
+//
+//		An SDKSTATUS code.
+//
+//--
+#define SdkRegisterOnBuffUpdate(Callback, UserData) SDK_CONTEXT_GLOBAL->_SdkRegisterOnBuffUpdate(Callback, UserData)
