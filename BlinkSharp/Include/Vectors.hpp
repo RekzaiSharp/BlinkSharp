@@ -1,11 +1,12 @@
 #pragma once
 
 #pragma warning(push, 0)
-#pragma warning(disable: 26495)
+#pragma warning(disable: 26495 4774)
 #include <d3dx9.h>
 #include <d3d9.h>
 #include <Windows.h>
 #include <vector>
+#include <sstream>
 #pragma warning(pop)
 
 class Vector3;
@@ -118,6 +119,7 @@ public:
 	}
 	#pragma endregion
 
+	std::string ToString();
 	float Length();
 	Vector2 Normalize();
 	Vector2 Normalized();
@@ -152,6 +154,7 @@ public:
 
 	Vector3 To3D(float h = 0.0f);
 	bool IsOnScreen(float radius = 0.0f);
+	int  GetCollisionFlags(float height = 0.0f);
 	bool IsWall(float height = 0.0f);
 	bool IsGrass(float height = 0.0f);
 	float GetTerrainHeight(float height = 0.0f);
@@ -295,6 +298,7 @@ public:
 	}
 	#pragma endregion
 	
+	std::string ToString();
 	float Length();
 	Vector3 Normalize();
 	Vector3 Normalized();
@@ -323,6 +327,8 @@ public:
 	Vector3 RotatedAroundPoint(Vector3& b, float angle);
 
 	Vector2 To2D();
+
+	int GetCollisionFlags();
 	
 	bool IsWall();
 	bool IsGrass();
@@ -544,6 +550,10 @@ inline Vector2 CheckLineIntersectionEx2(Vector2 a, Vector2 b, Vector2 c, Vector2
 
 //https://code.google.com/p/xna-circle-collision-detection/downloads/detail?name=Circle%20Collision%20Example.zip&can=2&q=
 inline std::pair<bool, float> GetCollisionTime(Vector2& Pa, Vector2& Pb, Vector2& Va, Vector2& Vb, float Ra, float Rb) {
+	if (Pa.Distance(Pb) < (Ra + Rb)) {
+		return std::make_pair(true, 0.0f);
+	}
+
 	Vector2 Pab = Pa - Pb;
 	Vector2 Vab = Va - Vb;
 	
@@ -767,10 +777,15 @@ __declspec(selectany) PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
 __declspec(selectany) void* g_LocalPlayer;
 
 #pragma region Vector2 Implementations
+inline std::string Vector2::ToString() {
+	std::ostringstream out;
+	out << "{ " << this->x << ", " << this->y << " }";
+	return out.str();
+}
 
 inline Vector3 Vector2::Closest(std::vector<Vector3>& arr) {
 	Vector3 result = Vector3{};
-	float distance = HUGE_VAL;
+	float distance = HUGE_VALF;
 
 	for (auto vector : arr) {
 		float tempDist = this->Distance(vector);
@@ -897,16 +912,19 @@ inline Vector2 Vector2::Perpendicular(int offset) {
 	return (offset == 0) ? Vector2(-this->y, this->x) : Vector2(this->y, -this->x);
 }
 
-inline float Vector2::Polar() {
+inline float Vector2::Polar() {	
 	if (std::abs(this->x - 0) <= (float)1e-9) {
 		return (this->y > 0) ? 90.f : ((this->y < 0) ? 270.f : 0.f);
 	}
 
+	#pragma warning ( push )
+	#pragma warning ( disable: 4723 )
 	auto theta = (float)(std::atan(this->y / this->x) * (180 / M_PI));
+	#pragma warning ( pop )	
 	if (this->x < 0) {
 		theta += 180;
 	}
-
+	
 	return (theta < 0) ? theta + 360 : theta;
 }
 
@@ -959,6 +977,13 @@ inline bool Vector2::IsOnScreen(float radius) {
 	return this->To3D().IsOnScreen(radius);
 }
 
+inline int Vector2::GetCollisionFlags(float height) {
+	int Flags{ 0 };
+	auto position{ this->To3D(height) };
+	SdkGetCollisionFlags(&position, &Flags);
+	return Flags;
+}
+
 inline bool Vector2::IsWall(float height) {
 	bool bIsWall = false;
 	auto position { this->To3D(height) };
@@ -967,13 +992,8 @@ inline bool Vector2::IsWall(float height) {
 	return bIsWall;
 }
 
-inline bool Vector2::IsGrass(float height)
-{
-	int flags = 0;
-	auto position { this->To3D(height) };
-	SdkGetCollisionFlags(&position, &flags);
-
-	return (flags & COLLISION_FLAG_GRASS);
+inline bool Vector2::IsGrass(float height) {
+	return (GetCollisionFlags(height) & COLLISION_FLAG_GRASS);
 }
 
 inline float Vector2::GetTerrainHeight(float height) {
@@ -1025,7 +1045,7 @@ inline float Vector2::AngleBetween(Vector3 & b) {
 
 inline Vector2 Vector2::Closest(std::vector<Vector2>& arr) {
 	Vector2 result = Vector2{};
-	float distance = HUGE_VAL;
+	float distance = HUGE_VALF;
 
 	for (auto vector : arr) {
 		float tempDist = this->Distance(vector);
@@ -1040,6 +1060,12 @@ inline Vector2 Vector2::Closest(std::vector<Vector2>& arr) {
 #pragma endregion
 
 #pragma region Vector3 Implementations
+
+inline std::string Vector3::ToString() {
+	std::ostringstream out;
+	out << "{ " << this->x << ", " << this->y << ", " << this->z << " }";
+	return out.str();
+}
 
 inline float Vector3::Length() {
 	return (float)sqrt((x * x) + (y * y) + (z * z));
@@ -1138,15 +1164,17 @@ inline Vector3 Vector3::RotatedAroundPoint(Vector3 & b, float angle) {
 inline Vector2 Vector3::To2D() {
 	return Vector2(x, z);
 }
-
+inline int Vector3::GetCollisionFlags() {
+	int Flags{ 0 };
+	SdkGetCollisionFlags(this, &Flags);
+	return Flags;
+}
 inline bool Vector3::IsWall() {
 	bool tmp;  SdkIsLocationWall(this, &tmp);
 	return tmp;
 }
-inline bool Vector3::IsGrass() {
-	int Flags{ 0 };
-	SdkGetCollisionFlags(this, &Flags);
-	return (Flags & COLLISION_FLAG_GRASS);
+inline bool Vector3::IsGrass() {	
+	return (GetCollisionFlags() & COLLISION_FLAG_GRASS);
 }
 inline bool Vector3::IsOnScreen(float radius) {
 	RECT lpRect{};

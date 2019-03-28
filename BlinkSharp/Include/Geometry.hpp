@@ -61,36 +61,34 @@ namespace Geometry {
 			return result;
 		}
 
-		virtual inline bool IsOutside(Vector2& point) {
+		virtual inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) {
+			UNREFERENCED_PARAMETER(extraRadius);
 			IntPoint p((ClipperLib::cInt)point.x, (ClipperLib::cInt)point.y);
 			return PointInPolygon(p, this->ToClipperPath()) != 1;
 		}
 
-		virtual inline bool IsOutside(Vector3& point) {
+		virtual inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) {
+			UNREFERENCED_PARAMETER(extraRadius);
 			IntPoint p((ClipperLib::cInt)point.x, (ClipperLib::cInt)point.z);
 			return PointInPolygon(p, this->ToClipperPath()) != 1;
 		}
 
-		inline bool IsInside(Vector2 point, float extraRadius = 0.0f);
+		virtual inline bool IsInside(Vector2 point, float extraRadius = 0.0f);
 
-		inline bool IsInside(Polygon& poly) {
-			Vector2 center{};
+		virtual inline bool IsInside(Polygon& poly) {
 			for (auto pos : poly.Points) {
 				if (!IsOutside(pos)) {
 					return true;
-				}
-				center += pos;
+				}				
 			}
-			center.x /= poly.Points.size();
-			center.y /= poly.Points.size();
-			return !IsOutside(center);
+			return Intersects(poly);
 		}		
 
-		inline bool IsInside(Vector3& point, float extraRadius = 0.0f) {
+		virtual inline bool IsInside(Vector3& point, float extraRadius = 0.0f) {
 			return IsInside(point.To2D(), extraRadius);
 		}
 
-		inline bool IsInside(GameObject* obj, float extraRadius = 0.0f) {
+		virtual inline bool IsInside(GameObject* obj, float extraRadius = 0.0f) {
 			return IsInside(obj->GetPosition().To2D(), obj->GetBoundingRadius() + extraRadius);
 		}
 
@@ -124,12 +122,16 @@ namespace Geometry {
 			}
 		}
 
-		inline bool IsOutside(Vector2& point) final {			
-			return Center.Distance(point) > Radius;
+		inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) final {
+			return Center.Distance(point) > (Radius + extraRadius);
 		}
 
-		inline bool IsOutside(Vector3& point) final {
-			return Center.Distance(point) > Radius;
+		inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) final {
+			return Center.Distance(point) > (Radius + extraRadius);
+		}
+
+		inline bool IsInside(Vector2 point, float extraRadius = 0.0f) final {
+			return !IsOutside(point, extraRadius);
 		}
 	};
 
@@ -170,15 +172,19 @@ namespace Geometry {
 			return Direction().Perpendicular();
 		}
 
-		inline bool IsOutside(Vector2& point) final {
+		inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) final {
 			auto projection{ point.ProjectOn(Start, End) };
-			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > Width);
+			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > (Width + extraRadius));
 		}
 
-		inline bool IsOutside(Vector3& point) final {
+		inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) final {
 			auto projection{ point.To2D().ProjectOn(Start, End) };
-			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > Width);
-		}		
+			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > (Width + extraRadius));
+		}	
+
+		inline bool IsInside(Vector2 point, float extraRadius = 0.0f) final {
+			return !IsOutside(point, extraRadius);
+		}
 	};
 
 	class Ring : public Polygon {
@@ -214,12 +220,16 @@ namespace Geometry {
 			}
 		}
 
-		inline bool IsOutside(Vector2& point) final {
-			return Center.Distance(point) > OuterRadius || Center.Distance(point) < InnerRadius;
+		inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) final {
+			return Center.Distance(point) > (OuterRadius + extraRadius) || Center.Distance(point) < (InnerRadius - extraRadius);
 		}
 
-		inline bool IsOutside(Vector3& point) final {
-			return Center.Distance(point) > OuterRadius || Center.Distance(point) < InnerRadius;
+		inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) final {
+			return Center.Distance(point) > (OuterRadius + extraRadius) || Center.Distance(point) < (InnerRadius - extraRadius);
+		}
+
+		inline bool IsInside(Vector2 point, float extraRadius = 0.0f) final {
+			return !IsOutside(point, extraRadius);
 		}
 	};
 
@@ -253,19 +263,22 @@ namespace Geometry {
 			Points.push_back(LineEnd);
 		}
 
-		inline bool IsOutside(Vector2& point) final {
+		inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) final {
 			auto projection{ point.ProjectOn(LineStart, LineEnd) };
-			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > 1.0f);
+			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > (1.0f + extraRadius));
 		}
 
-		inline bool IsOutside(Vector3& point) final {
+		inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) final {
 			auto projection{ point.To2D().ProjectOn(LineStart, LineEnd) };
-			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > 1.0f);
+			return (!projection.IsOnSegment || projection.SegmentPoint.Distance(point) > (1.0f + extraRadius));
+		}
+
+		inline bool IsInside(Vector2 point, float extraRadius = 0.0f) final {
+			return !IsOutside(point, extraRadius);
 		}
 	};
-
+		
 	class Sector :public Polygon {
-		static const int CircleLineSegmentN = 22;
 		int Quality;
 	public:
 		float Angle;
@@ -296,7 +309,40 @@ namespace Geometry {
 				Points.emplace_back(Center.x + outRadius * cDirection.x, Center.y + outRadius * cDirection.y);
 			}
 		}
+
+		inline bool IsOutside(Vector2& point, float extraRadius = 0.0f) final {
+			if (Center.Distance(point) > (Radius + extraRadius)) { return true; }
+			float halfAngle{ Common::RadToDeg((Angle * 0.5f)) };
+
+			auto pointSegment{ point - Center };
+			if (Direction.AngleBetween(pointSegment) <= halfAngle) {
+				return false;
+			}
+
+			if (extraRadius > 0.1f) {
+				auto side1{ Center + Direction.Rotated(Angle *  0.5f) * Radius };
+				auto side2{ Center + Direction.Rotated(Angle * -0.5f) * Radius };
+				auto &nearestSide{ side1.Distance(point) < side2.Distance(point) ? side1 : side2 };
+
+				auto proj{ point.ProjectOn(Center, nearestSide) };
+				auto pointSegmentExt{ point.Extended(proj.SegmentPoint, extraRadius) - Center };
+				if (Direction.AngleBetween(pointSegmentExt) <= halfAngle) {
+					return false;
+				}
+			}			
+			return true;			
+		}
+
+		inline bool IsOutside(Vector3& point, float extraRadius = 0.0f) final {
+			auto tmp{ point.To2D()};
+			return IsOutside(tmp, extraRadius);
+		}
+
+		inline bool IsInside(Vector2 point, float extraRadius = 0.0f) final {
+			return !IsOutside(point, extraRadius);
+		}
 	};
+	typedef Sector Cone;
 
 	class Arc : public Polygon {
 		int Quality;
@@ -329,7 +375,7 @@ namespace Geometry {
 			}
 		}
 	};
-
+	   
 	/// Gets position with time
 	inline Vector2 PositionAfter(std::vector<Vector2>& Path, float t, float speed, float delay = 0.0f) {
 		auto distance = std::max<float>(0.0f, t - delay) * speed;
@@ -364,14 +410,261 @@ namespace Geometry {
 		result = result + *point1;
 		return result;
 	}
+
+	//Fixed-Radius MEC algorithm made for league of legends by @RMAN#9401
+	inline std::pair<Vector2, int> BestCoveringCircle(std::vector<Vector2>& Points, float circleRadius) {
+		static constexpr size_t MAX_POINTS(100);
+
+		auto n{ Points.size() };
+		if (n == 0) 
+			return { Vector2(), 0 };		
+		else if (n == 1) 
+			return { Points.front(), 1 };
+		else if (n >= MAX_POINTS)
+			return { Vector2(), 0 };
+
+		//Memoize distance between pairs
+		float dis[MAX_POINTS][MAX_POINTS];
+		for (size_t i = 0; i < n - 1; i++) {
+			for (size_t j = i + 1; j < n; j++) {
+				dis[j][i] = Points[i].Distance(Points[j]);
+				dis[i][j] = dis[j][i];
+			}				
+		}			
+
+		int hitCount = 0;
+		Vector2 pos{};
+
+		Vector2 xAxis{ 0.0f, 0.0f };
+		Vector2 range{ circleRadius, 0.0f };		
+		
+		//Rotates around each point
+		for (size_t i = 0; i < n; i++) {			
+			std::vector<std::pair<double, std::pair<Vector2, bool>>> angles;
+
+			//Sorts at what angle each point enters/exits the circle [true = entry, false = exit]
+			for (size_t j = 0; j < n; j++) {
+				if (i != j && dis[i][j] <= (2 * circleRadius)) {
+					double A = (Points[j] - Points[i]).Polar() * (M_PI / 180.0f);
+					if (A > M_PI) { A -= (M_PI * 2.0); }
+					double B = std::acos(dis[i][j] / (2 * circleRadius));	
+					if (B > M_PI) { B -= (M_PI * 2.0); }					
+					
+					Vector2 c1{ Points[i] + range.Rotated((float)(B-A)) };
+					Vector2 c2{ Points[i] + range.Rotated((float)(-B-A)) };			
+
+					angles.push_back({ A-B, {c1, true } });
+					angles.push_back({ A+B, {c2, false} });
+				}
+			}
+			std::sort(angles.begin(), angles.end());
+
+			//Gets current hitCount and Center
+			Vector2 cent{}; int count = 1, res = 1;
+			for (auto it = angles.begin(); it != angles.end(); ++it) {
+				if ((*it).second.second)
+					count++; //entry
+				else
+					count--; //exit
+
+				if (count > res) {
+					res = count;
+					cent = (*it).second.first;
+				}	
+				
+			}
+
+			//Compares current data to best data
+			if (res > hitCount) {
+				hitCount = res;
+				pos = cent;				
+			}
+		}
+		
+		//Centralize Circle to enhance hitChance
+		Vector2 Center{};
+		for (auto &Point : Points) {
+			if (Point.Distance(pos) <= (circleRadius+1.0f)) {
+				Center += Point;				
+			}
+		}
+		Center /= (float)hitCount;		
+		
+		return std::make_pair(Center, hitCount);
+	}	
+
+	//Fixed-Width MER algorithm made for league of legends by @RMAN#9401
+	inline std::pair<Vector2, int> BestCoveringRectangle(std::vector<Vector2>& Points, Vector2& startPos, float width) {
+		auto n{ Points.size() };
+		if (n == 0)
+			return { Vector2(), 0 };
+		else if (n == 1)
+			return { Points.front(), 1 };
+
+		#pragma region Define Sector All Points Are In
+		std::pair<double, Vector2> smallestPolar{ M_PI, Vector2()};
+		std::pair<double, Vector2> biggestPolar {-M_PI, Vector2()};
+
+		float range{ 0.0f };
+		for (auto &Point : Points) {
+			range = std::max<float>(range, startPos.Distance(Point));
+
+			double polar = (Point - startPos).Polar() * (M_PI / 180.0f);
+			if (polar > M_PI) { polar -= (M_PI * 2.0); }
+
+			if (polar > biggestPolar.first) {
+				biggestPolar.first  = polar;
+				biggestPolar.second = Point;
+			}
+
+			if (polar < smallestPolar.first) {
+				smallestPolar.first  = polar;
+				smallestPolar.second = Point;
+			}
+		}
+		
+		double angleBetween{ (biggestPolar.first - smallestPolar.first) };
+		if (angleBetween > M_PI) { angleBetween = (2 * M_PI) - angleBetween; }		
+
+		Vector2 possibleCenter1{ smallestPolar.second.RotatedAroundPoint(startPos, - ((float)angleBetween * 0.5f)) };
+		Vector2 possibleCenter2{ smallestPolar.second.RotatedAroundPoint(startPos, ((float)angleBetween * 0.5f)) };
+
+		float distFromPoints1{ possibleCenter1.Distance(smallestPolar.second) + possibleCenter1.Distance(biggestPolar.second) };
+		float distFromPoints2{ possibleCenter2.Distance(smallestPolar.second) + possibleCenter2.Distance(biggestPolar.second) };
+
+		Vector2 centerPoint{distFromPoints1 < distFromPoints2 ? possibleCenter1 : possibleCenter2};		
+		#pragma endregion
+
+		//All Points are inside this cone
+		Geometry::Cone cone(startPos, centerPoint, (float)angleBetween, range);
+
+		int hitCount{ 0 };
+		
+
+		//Iterate Cone Sectors to find best solution
+		std::vector<size_t> hitPoints{};
+		Vector2 LastPoint{};
+		for (auto &sectorPoint : cone.Points) {
+			if (sectorPoint != startPos && sectorPoint.Distance(LastPoint) > (width * 0.25f)) {
+				LastPoint = sectorPoint;
+
+				auto tmpCount{ 0 };
+				std::vector<size_t> tmpPoints{};
+				Geometry::Rectangle rect(startPos, sectorPoint, width);
+				for (size_t i = 0; i < n; ++i) {
+					if (rect.IsInside(Points[i])) {
+						++tmpCount;
+						tmpPoints.push_back(i);
+					}
+				}
+
+				if (tmpCount > hitCount) {
+					hitCount = tmpCount;
+					hitPoints.swap(tmpPoints);
+				}
+			}
+		}	
+
+		//Centralize Rectangle for best HitChance
+		Vector2 Center{};
+		for (auto i : hitPoints) {
+			Center += Points[i];
+		}
+		Center /= (float)hitCount;
+
+		return { startPos.Extended(Center, range), hitCount };
+	}
+
+	//Fixed-Angle MEC algorithm made for league of legends by @RMAN#9401
+	inline std::pair<Vector2, int> BestCoveringCone(std::vector<Vector2>& Points, Vector2& startPos, float angle) {
+		auto n{ Points.size() };
+		if (n == 0)
+			return { Vector2(), 0 };
+		else if (n == 1)
+			return { Points.front(), 1 };
+
+		#pragma region Define Sector All Points Are In
+		std::pair<double, Vector2> smallestPolar{ M_PI, Vector2() };
+		std::pair<double, Vector2> biggestPolar{ -M_PI, Vector2() };
+
+		float range{ 0.0f };
+		for (auto &Point : Points) {
+			range = std::max<float>(range, startPos.Distance(Point));
+
+			double polar = (Point - startPos).Polar() * (M_PI / 180.0f);
+			if (polar > M_PI) { polar -= (M_PI * 2.0); }
+
+			if (polar > biggestPolar.first) {
+				biggestPolar.first = polar;
+				biggestPolar.second = Point;
+			}
+
+			if (polar < smallestPolar.first) {
+				smallestPolar.first = polar;
+				smallestPolar.second = Point;
+			}
+		}
+
+		double angleBetween{ (biggestPolar.first - smallestPolar.first) };
+		if (angleBetween > M_PI) { angleBetween = (2 * M_PI) - angleBetween; }
+
+		Vector2 possibleCenter1{ smallestPolar.second.RotatedAroundPoint(startPos, -((float)angleBetween * 0.5f)) };
+		Vector2 possibleCenter2{ smallestPolar.second.RotatedAroundPoint(startPos, ((float)angleBetween * 0.5f)) };
+
+		float distFromPoints1{ possibleCenter1.Distance(smallestPolar.second) + possibleCenter1.Distance(biggestPolar.second) };
+		float distFromPoints2{ possibleCenter2.Distance(smallestPolar.second) + possibleCenter2.Distance(biggestPolar.second) };
+
+		Vector2 centerPoint{ distFromPoints1 < distFromPoints2 ? possibleCenter1 : possibleCenter2 };
+		#pragma endregion
+
+		//All Points are inside this cone
+		Geometry::Cone cone(startPos, centerPoint, (float)angleBetween, range);
+
+		float arcLength{range*angle};
+
+		
+		//Iterate Cone Sectors to find best solution
+		int hitCount{ 0 };
+		std::vector<size_t> hitPoints{};
+		Vector2 LastPoint{};
+		for (auto &sectorPoint : cone.Points) {
+			if (sectorPoint != startPos && sectorPoint.Distance(LastPoint) > (arcLength * 0.1f)) {
+				LastPoint = sectorPoint;
+
+				auto tmpCount{ 0 };
+				std::vector<size_t> tmpPoints{};				
+				Geometry::Cone tmpCone(startPos, sectorPoint, angle, range);
+				for (size_t i = 0; i < n; ++i) {
+					if (tmpCone.IsInside(Points[i])) {
+						++tmpCount;
+						tmpPoints.push_back(i);
+					}
+				}
+
+				if (tmpCount > hitCount) {
+					hitCount = tmpCount;					
+					hitPoints.swap(tmpPoints);
+				}
+			}
+		}
+
+		//Centralize Cone for best HitChance
+		Vector2 Center{};
+		for (auto i : hitPoints) {
+			Center += Points[i];
+		}
+		Center /= (float)hitCount;
+
+		return { Center, hitCount };
+	}
 }
 
 inline bool Geometry::Polygon::IsInside(Vector2 point, float extraRadius) {
-	if (extraRadius < 10.0f) {
-		return !IsOutside(point);
+	if (!IsOutside(point, extraRadius)) {
+		return true;
 	}
 
-	Geometry::Circle poly(point, extraRadius, 6);
+	Geometry::Circle poly(point, extraRadius * 0.6f, 6);
 	return IsInside(poly);
 }
 
@@ -466,6 +759,11 @@ namespace ClipperWrapper {
 	/// Defines Arc Polygon
 	inline static Geometry::Polygon DefineArc(Vector2 start, Vector2 direction, float angle, float radius, int quality = 20) {
 		return Geometry::Arc(start, direction, angle, radius, quality);
+	}
+
+	// Defines Cone Polygon
+	inline static Geometry::Polygon DefineCone(Vector2 startPosition, Vector2 endPosition, float coneAngle, float range) {
+		return Geometry::Cone(startPosition, endPosition, coneAngle, range);		
 	}
 
 	//I felt like killing myself after this so if you use it give credits to RMAN thx

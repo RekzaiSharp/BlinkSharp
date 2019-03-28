@@ -2,7 +2,6 @@
 #include "../../Core/Misc/DamageLib.hpp"
 #include "Modes/Irelia.Combo.hpp"
 #include "Modes/Irelia.Clear.hpp"
-#include <stdbool.h>
 
 extern PSDK_CONTEXT SDK_CONTEXT_GLOBAL;
 SDKCOLOR purple = { 255, 0, 255, 255 };
@@ -14,8 +13,8 @@ AttackableUnit* Irelia::OrbTarget;
 
 Spell::Targeted Irelia::Q(SpellSlot::Q, 600, DamageType::Physical);
 Spell::Active Irelia::W(SpellSlot::W, 825, DamageType::Physical);
-Spell::Skillshot Irelia::E(SpellSlot::E, 850.f, SkillshotType::Line, 0.25f, 2000.f, 60.f, DamageType::Physical, false, CollisionFlags::YasuoWall);
-Spell::Skillshot Irelia::R(SpellSlot::R, 1000.f, SkillshotType::Line, 0.25f, 2000.f, 200.f, DamageType::Magical, true, CollisionFlags::Heroes);
+Spell::Skillshot Irelia::E(SpellSlot::E, 850.f, SkillshotType::Line, 0.45f, 2000.f, 60.f, DamageType::Physical, false, CollisionFlags::YasuoWall);
+Spell::Skillshot Irelia::R(SpellSlot::R, 975.f, SkillshotType::Line, 0.25f, 2000.f, 200.f, DamageType::Magical, true, CollisionFlags::Heroes);
 
 void Irelia::Init () {
 	CurrentTarget = nullptr;
@@ -33,9 +32,6 @@ void Irelia::Init () {
 void Irelia::Tick(void * UserData) {
 	if (!Game::IsChatOpen () && !Game::IsOverlayOpen () && GetActiveWindow () == GetForegroundWindow ())
 	{
-		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo))
-			IreliaCombo::Tick ();
-
 		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::LaneClear))
 			IreliaClear::LaneClear ();
 
@@ -45,75 +41,32 @@ void Irelia::Tick(void * UserData) {
 		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Mixed))
 			IreliaCombo::SmartTrade ();
 
+
 		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Flee))
-		{
-			auto wards = pSDK->EntityManager->GetEnemyMinions (600.f);
-			for (auto& ward : wards)
-				Game::PrintChat (ward.second->GetName());
-		}
-			
+			Game::PrintChat(std::to_string(E.Delay));
 	}
 }
 
 void Irelia::Update(void * UserData) 
 {
-	if (pIrelia->lastDelay != Menu::Get<int> ("combo.e.prediction"))
+	if (!Game::IsChatOpen () && !Game::IsOverlayOpen () && GetActiveWindow () == GetForegroundWindow ())
 	{
-		if (Menu::Get<int> ("combo.e.prediction") == 0)
-			E.Delay = 0.50f + float ((Game::Ping () / 1000) / 2);
-		if (Menu::Get<int> ("combo.e.prediction") == 1)
-			E.Delay = 0.25f + float ((Game::Ping () / 1000) / 2);
+		if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo))
+			IreliaCombo::Tick ();
 
-		pIrelia->lastDelay = Menu::Get<int> ("combo.e.prediction");
-	}
-
-	if (Menu::Get<Hotkey> ("R-Key").Active && R.IsReady())
-	{
-		const auto target = pCore->TS->GetTarget (R.Range - 50.f);
-		if (target)
+		if (Menu::Get<Hotkey> ("R-Key").Active && R.IsReady () && Irelia::R.LastCastTick + 1000 < GetTickCount ())
 		{
-			auto pred = R.GetPrediction (target);
-			if (pred->Hitchance >= HitChance::Medium && pred->CastPosition.IsValid ())
-				R.Cast (&pred->CastPosition);
+			const auto target = pCore->TS->GetTarget (R.Range - 50.f);
+			if (target)
+			{
+				auto pred = R.GetPrediction (target);
+				if (pred->Hitchance >= HitChance::Medium && pred->CastPosition.IsValid ())
+					R.Cast (&pred->CastPosition);
+			}
 		}
 	}
 }
 
-auto Irelia::Flee() -> void
-{
-	/*const auto target = pCore->TS->GetTarget (850);
-
-	if (target)
-	{
-		if (Menu::Get<bool> ("FLEEQ") && Irelia::Q.IsReady())
-		{
-			auto minions = pSDK->EntityManager->GetEnemyMinions (600);
-			for (auto& minion : minions)
-			{
-				if (minion.second->GetHealth ().Current <= Pred->PhysicalDamage (minion.second, BladeSurge::GetDamage (true)) && minion.second->Distance (target) > Player.Distance (target))
-				{
-					pSDK->Control->CastSpell (0, minion.second);
-				}
-			}
-		}
-
-		if (Menu::Get<bool> ("FLEEE"))
-		{
-			if (Player.Distance (target) <= 850)
-			{
-				if (!pIrelia->active_blade.net_id && pIrelia->E.IsReady () && target)
-					pSDK->Control->CastSpell (2, &Player.GetPosition ());
-
-				if (pIrelia->active_blade.net_id && pIrelia->E.IsReady () && target)
-				{
-					auto castPos = Pred->IreliaPrediction (pIrelia->active_blade.position, target, 875.f, 0.25f, 2000.f);
-					if (castPos.IsValid ())
-						pSDK->Control->CastSpell (2, &castPos);
-				}
-			}
-		}
-	}*/
-}
 
 void Irelia::Draw(void * UserData) {
 	if (Menu::Get<bool>("draw.q")  && pIrelia->Q.IsReady())
@@ -140,7 +93,16 @@ void Irelia::Draw(void * UserData) {
 		auto enemies = pSDK->EntityManager->GetEnemyHeroes (1000.f);
 		for (auto& enemy : enemies)
 		{
-			DamageLib::DrawDamage (enemy.second, Pred->PhysicalDamage (enemy.second, IreliaDamage::GetDamage()));
+			if (enemy.second->IsVisibleOnScreen())
+				DamageLib::DrawDamage (enemy.second, Pred->PhysicalDamage (enemy.second, IreliaDamage::GetDamage()));
+		}
+	}
+
+	if (Menu::Get<bool>("draw.passive"))
+	{
+		if (Player.GetBuffCount("ireliapassivestacks") == 5)
+		{
+			Draw::Circle (&Player.GetPosition (), (Player.GetBuff ("ireliapassivestacks").EndTime - Game::Time ()) * 100.f, &Color::Orange, 0, &Vector3::DirectionVector);
 		}
 	}
 }
@@ -240,24 +202,6 @@ void Irelia::DrawMenu (void * UserData) {
 			SdkUiEndTree ();
 		}
 
-		//bool f_open (true);
-		//SdkUiBeginTree ("[Misc] - Flee", &f_open);
-		//if (f_open)
-		//{
-		//	Menu::Checkbox ("Use Q", "FLEEQ", true);
-		//	Menu::SliderFloat ("HP % Panic", "flee.q.panic", 20.f, 1.f, 100.f, "%.0f");
-		//	Menu::Checkbox ("Use E", "FLEEE", true);
-		//	SdkUiEndTree ();
-		//}
-
-		//bool t_open (true);
-		//SdkUiBeginTree ("[Misc] - Harass (Mixed)", &t_open);
-		//if (t_open)
-		//{
-		//	Menu::SliderFloat ("HP Threshold %", "harass.q.threshold", 20.f, 1.f, 100.f, "%.0f");
-		//	SdkUiEndTree ();
-		//}
-
 		bool d_open (true);
 		SdkUiBeginTree ("[Misc] - Drawings", &d_open);
 		if (d_open)
@@ -267,6 +211,7 @@ void Irelia::DrawMenu (void * UserData) {
 			Menu::Checkbox ("Draw E", "draw.e", true);
 			Menu::Checkbox ("Draw Q Minions", "draw.minion.q", true);
 			Menu::Checkbox ("Draw Damage", "draw.hero.q", true);
+			Menu::Checkbox ("Draw Passive", "draw.passive", true); 
 			SdkUiEndTree ();
 		}
 		SdkUiEndWindow ();

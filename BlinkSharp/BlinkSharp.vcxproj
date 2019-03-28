@@ -176,6 +176,7 @@
     <ClInclude Include="Core\Misc\DamageLib.hpp" />
     <ClInclude Include="Champions\Debug\Ezreal.h" />
     <ClInclude Include="Core\Misc\Utility.hpp" />
+    <ClInclude Include="Core\Orbwalker.hpp" />
     <ClInclude Include="Include\clipper.hpp" />
     <ClInclude Include="Include\Common.hpp" />
     <ClInclude Include="Include\DashDatabase.h" />
@@ -188,7 +189,9 @@
     <ClInclude Include="Include\IDamageLib.h" />
     <ClInclude Include="Include\IEntityManager.h" />
     <ClInclude Include="Include\IEventHandler.h" />
+    <ClInclude Include="Include\IGapcloser.h" />
     <ClInclude Include="Include\IHealthPrediction.h" />
+    <ClInclude Include="Include\IInterruptible.h" />
     <ClInclude Include="Include\Interface Structs.h" />
     <ClInclude Include="Include\Interruptible.hpp" />
     <ClInclude Include="Include\IOrbwalker.h" />

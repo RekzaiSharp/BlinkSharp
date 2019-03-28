@@ -37,7 +37,9 @@ public:
 	bool wasCast = false;
 	bool isCastingW = false;
 	bool inDash = false;
+	Vector3 firstPos = Vector3 (0, 0, 0);
 	stun_blade active_blade;
+	bool wasFacing = false;
 };
 
 extern std::unique_ptr<Irelia> pIrelia;

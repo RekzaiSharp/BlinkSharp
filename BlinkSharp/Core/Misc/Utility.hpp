@@ -77,14 +77,22 @@ public:
 	{
 		if (Player.GetTeamID () == TEAM_TYPE_ORDER)
 		{
-			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, &Player.GetPosition (), TEAM_TYPE_CHAOS);
+			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, nullptr, TEAM_TYPE_CHAOS);
+
+			if (!turret)
+				return false;
+
 			auto tPos = turret->GetPosition ();
 			if (pos.Distance (tPos) <= 775)
 				return true;
 		}
 		else
 		{
-			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, &Player.GetPosition (), TEAM_TYPE_ORDER);
+			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, nullptr, TEAM_TYPE_ORDER);
+
+			if (!turret)
+				return false;
+
 			auto tPos = turret->GetPosition ();
 			if (pos.Distance (tPos) <= 775)
 				return true;
@@ -95,14 +103,22 @@ public:
 	{
 		if (Player.GetTeamID () == TEAM_TYPE_ORDER)
 		{
-			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, &Player.GetPosition (), TEAM_TYPE_ORDER);
+			auto turret = pSDK->EntityManager->GetNearestTurret (nullptr, &pos, TEAM_TYPE_ORDER);
+
+			if (!turret)
+				return false;
+
 			auto tPos = turret->GetPosition ();
 			if (pos.Distance (tPos) <= 775)
 				return true;
 		}
 		else
 		{
-			auto turret = pSDK->EntityManager->GetNearestTurret (&Player, &Player.GetPosition (), TEAM_TYPE_CHAOS);
+			auto turret = pSDK->EntityManager->GetNearestTurret (nullptr, &pos, TEAM_TYPE_CHAOS);
+
+			if (!turret)
+				return false;
+
 			auto tPos = turret->GetPosition ();
 			if (pos.Distance (tPos) <= 775)
 				return true;

@@ -8,6 +8,7 @@ void Core::Init()
 	//Prediction::PathingTracker::Init ();
 
 	Game::PrintChat (R"([RiftSharp] <font color="#ff2d00">Core</font> Loaded.)");
+	Game::PrintChat (R"([RiftSharp] <font color="#ff2d00">Orbwalker</font> Loaded.)");
 
 	if (Common::CompareLower (Player.GetCharName (), "irelia"))
 		Irelia::Init ();

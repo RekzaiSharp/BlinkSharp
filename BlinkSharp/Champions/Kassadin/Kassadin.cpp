@@ -148,7 +148,7 @@ void Kassadin::PostAttack(AttackableUnit* Target)
 		if (Menu::Get<bool> ("combo.w"))
 		{
 			if (pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo))
-				if (Menu::Get<bool> ("combo.w") && W.IsReady () && Target->IsValid () && Player.Distance (Target) <= Player.GetTrueAttackRange () && Target->IsHero ())
+				if (Menu::Get<bool> ("combo.w") && W.IsReady () && Player.Distance (Target) <= Player.GetTrueAttackRange () && Target->IsHero ())
 					W.Cast ();
 		}
 

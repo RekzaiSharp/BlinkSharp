@@ -45,7 +45,7 @@ TYPE Get##NAME##(){                                        \
     if ((!SDKSTATUS_SUCCESS(_STATE)) && DEBUG_PRINT) {                    \
         SdkUiConsoleWrite("[error][SDK Extensions] Error! MAKE_GET Could not retrieve %s for obj %p errorCode: %i.\n", __FUNCTION__, Object, (int)_STATE); \
     }                                                    \
-    return _##NAME;                                     \
+    return _##NAME ? _##NAME : DEFAULT;                                     \
 }
 
 #define MAKE_GET(NAME,TYPE,FUNCTIONDEF)                    \
@@ -118,5 +118,5 @@ if (Status##IMPORT > 0) { \
 CheckLocalPlayer(); \
 IMPORT_LIBRARY(LIBRARY_SDK, LIBRARY_IMPORT_SDK, LIBRARY_VERSION_SDK, pSDK); \
 IMPORT_LIBRARY(LIBRARY_ESSENTIALS, LIBRARY_IMPORT_ESSENTIALS, LIBRARY_VERSION_ESSENTIALS, pCore); \
-Player = pSDK->EntityManager->GetLocalPlayer(); 
-
+Player = pSDK->EntityManager->GetLocalPlayer(); \
+pSDK->EventHandler->RegisterCallback(CallbackEnum::Tick, Game::UpdateLocalPlayer);

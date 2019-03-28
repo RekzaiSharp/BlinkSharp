@@ -76,7 +76,7 @@ public:
 				auto mobs = pSDK->EntityManager->GetJungleMonsters (Kassadin::Q.Range);
 				for (auto& mob : mobs)
 				{
-					if (mob.second->IsValid () && mob.second->IsAlive ())
+					if (mob.second->IsAlive ())
 					{
 						Kassadin::Q.Cast (mob.second);
 					}
@@ -88,20 +88,20 @@ public:
 				auto enemies = pSDK->EntityManager->GetEnemyHeroes (Kassadin::Q.Range);
 				for (auto& enemy : enemies)
 				{
-					if (enemy.second->IsValid () && enemy.second->IsAlive () && enemy.second->IsChannelingImportantSpell ())
+					if (enemy.second->IsAlive () && enemy.second->IsChannelingImportantSpell ())
 						Kassadin::Q.Cast (enemy.second);
 				}
 			}
 
 			if (Menu::Get<bool>("flee.q") && pCore->Orbwalker->IsModeActive (OrbwalkingMode::Flee))
 			{
-				if (!Kassadin::R.IsReady () && !Kassadin::E.IsReady () && target->IsValid ())
+				if (!Kassadin::R.IsReady () && !Kassadin::E.IsReady ())
 					Kassadin::Q.Cast (target);
 			}
 
 			if (Menu::Get<bool>("harass.q") && pCore->Orbwalker->IsModeActive (OrbwalkingMode::Mixed))
 			{
-				if (target->IsValid () && target->IsAlive () && target->IsAlive ())
+				if (target->IsAlive () && target->IsAlive ())
 					Kassadin::Q.Cast (target);
 			}
 		}
@@ -155,7 +155,7 @@ public:
 				auto enemies = pSDK->EntityManager->GetEnemyHeroes (Kassadin::E.Range);
 				for (auto& enemy : enemies)
 				{
-					if (enemy.second->IsValid () && enemy.second->IsAlive () && enemy.second->GetHealth ().Current + enemy.second->GetHealth ().MagicalShield + 5.f <= Pred->MagicalDamage (enemy.second, GetDamage ()))
+					if (enemy.second->IsAlive () && enemy.second->GetHealth ().Current + enemy.second->GetHealth ().MagicalShield + 5.f <= Pred->MagicalDamage (enemy.second, GetDamage ()))
 						Kassadin::E.Cast (&enemy.second->GetPosition ());
 				}
 			}
@@ -165,7 +165,7 @@ public:
 				auto mobs = pSDK->EntityManager->GetJungleMonsters (Kassadin::E.Range);
 				for (auto mob : mobs)
 				{
-					if (mob.second->IsAlive () && mob.second->IsValid () && mob.second->GetHealth ().Current > 10.f)
+					if (mob.second->IsAlive () && mob.second->GetHealth ().Current > 10.f)
 						Kassadin::E.Cast (&mob.second->GetPosition ());
 				}
 			}
@@ -175,14 +175,14 @@ public:
 				auto minions = pSDK->EntityManager->GetEnemyMinions (Kassadin::E.Range);
 				for (auto& minion : minions)
 				{
-					if (minion.second->IsValid () && minion.second->IsAlive () && minion.second->GetHealth ().Current > 5.f)
+					if (minion.second->IsAlive () && minion.second->GetHealth ().Current > 5.f)
 						Kassadin::E.Cast (&minion.second->GetPosition ());
 				}
 			}
 
 			if (Menu::Get<int>("combo.q.logic") == 0 && pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo) && target)
 			{
-				if (pCore->TS->IsValidTarget (target) && !target->IsInvulnerable () && target->IsTargetable ())
+				if (!target->IsInvulnerable () && target->IsTargetable ())
 				{
 					if (!Kassadin::Q.IsReady () && !Kassadin::R.IsReady () && Player.Distance (target) <= Player.GetTrueAttackRange () + 50.f)
 						Kassadin::E.Cast (&target->GetPosition ());
@@ -190,13 +190,13 @@ public:
 			}
 			else if (Menu::Get<int> ("combo.q.logic") == 1 && pCore->Orbwalker->IsModeActive (OrbwalkingMode::Combo) && target)
 			{
-				if (pCore->TS->IsValidTarget (target) && !target->IsInvulnerable () && target->IsTargetable ())
+				if (!target->IsInvulnerable () && target->IsTargetable ())
 					Kassadin::E.Cast (&target->GetPosition());
 			}
 
 			if (Menu::Get<bool> ("flee.e") && pCore->Orbwalker->IsModeActive (OrbwalkingMode::Flee) && target)
 			{
-				if (pCore->TS->IsValidTarget (target) && !target->IsInvulnerable () && target->IsTargetable ())
+				if (!target->IsInvulnerable () && target->IsTargetable ())
 					Kassadin::E.Cast (&target->GetPosition ());
 			}
 		}
